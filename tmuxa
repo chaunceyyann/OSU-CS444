@@ -1,0 +1,2 @@
+#!/bin/sh
+tmux -S /tmp/cs444-015 attach
