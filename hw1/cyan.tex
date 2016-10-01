@@ -1,0 +1,68 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+\usepackage{booktabs}
+
+%random comment
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\newcommand{\toc}{\tableofcontents}
+
+%\usepackage{hyperref}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+
+%\tableofcontents
+
+\begin{center}
+\textsc{\LARGE CS 444 Group 4}\\
+
+% Title
+{ \huge \bfseries Project 1 Individual write-up\\}
+
+% Author
+\emph{Member:}\\
+Chauncey \textsc{YAN}
+\end{center}
+
+\section{What do you think the main point of this assignment is?}
+To be able to run the qemu virtual machine on the os-class server with customized built yocto kernel. Recall pthreads mutex semephere and Mersenne Twister. Learn how to write asm in c code.
+\section{How did you personally approach the problem? Design decisions, algorithm, etc.}
+Personally, I did not run a vm on linux before and gdb to a remote target. Thus, I did a research online first. Then I folow the instructions to get the kernel part done. The concurrency problem is bit chanllenge. First, I got the detect function work with the help from wikipedia. After I dig into the datasheet of how the rdrand and cpuid work, I made a function to detecting if the cpu support rdrand or not with asm code. After deside which methed to use, mt and rdrand will produce the simular output which is a random unsidend integer under the certain range of number. The producer thread produce a number to the buffer then waits with the random number of seconds between 2-9s. consumer thread is lock up until there is something in the buffer for it to consume. Another locking is impletmented is when the 32 buffer array is full the puducer thread will be lock until consumer consume one of the number.
+\section{How did you ensure your solution was correct? Testing details, for instance.} I compile the code on the os-class first. It shows the mt method was used and given the correct result. Then I copy the file to my Intel-based macbook an run the same code with same threads. I got the correct result with rdrand as well. Testing results are in the picture.
+
+
+\section{What did you learn?}
+I learned: \\
+running vm in linux\\
+build yocto linux kernel\\
+pthead with semephere lock\\
+Using mersene twister and rdrand\\
+asm coding in c\\
+
+
+\end{document}
