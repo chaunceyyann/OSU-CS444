@@ -37,5 +37,6 @@ ehthumbs.db
 Thumbs.db
 # Others #
 ##########
-.ext3
-linux-yocto-3.14/*
+linux-yocto-3.14
+core-image-lsb-sdk-qemux86.ext3
+archives/
