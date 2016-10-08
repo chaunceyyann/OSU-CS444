@@ -1,0 +1,192 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{c+cm}{/* }
+\PY{c+cm}{   A C-program for MT19937, with initialization improved 2002/1/26.}
+\PY{c+cm}{   Coded by Takuji Nishimura and Makoto Matsumoto.}
+
+\PY{c+cm}{   Before using, initialize the state by using init\PYZus{}genrand(seed)  }
+\PY{c+cm}{   or init\PYZus{}by\PYZus{}array(init\PYZus{}key, key\PYZus{}length).}
+
+\PY{c+cm}{   Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,}
+\PY{c+cm}{   All rights reserved.                          }
+
+\PY{c+cm}{   Redistribution and use in source and binary forms, with or without}
+\PY{c+cm}{   modification, are permitted provided that the following conditions}
+\PY{c+cm}{   are met:}
+
+\PY{c+cm}{   1. Redistributions of source code must retain the above copyright}
+\PY{c+cm}{   notice, this list of conditions and the following disclaimer.}
+
+\PY{c+cm}{   2. Redistributions in binary form must reproduce the above copyright}
+\PY{c+cm}{   notice, this list of conditions and the following disclaimer in the}
+\PY{c+cm}{   documentation and/or other materials provided with the distribution.}
+
+\PY{c+cm}{   3. The names of its contributors may not be used to endorse or promote }
+\PY{c+cm}{   products derived from this software without specific prior written }
+\PY{c+cm}{   permission.}
+
+\PY{c+cm}{   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS}
+\PY{c+cm}{   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT}
+\PY{c+cm}{   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR}
+\PY{c+cm}{   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR}
+\PY{c+cm}{   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,}
+\PY{c+cm}{   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,}
+\PY{c+cm}{   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR}
+\PY{c+cm}{   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF}
+\PY{c+cm}{   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING}
+\PY{c+cm}{   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS}
+\PY{c+cm}{   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.}
+
+
+\PY{c+cm}{   Any feedback is very welcome.}
+\PY{c+cm}{   http://www.math.sci.hiroshima-u.ac.jp/\PYZti{}m-mat/MT/emt.html}
+\PY{c+cm}{   email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)}
+\PY{c+cm}{*/}
+
+\PY{c+cp}{\PYZsh{}}\PY{c+cp}{include <stdio.h>}
+
+\PY{c+cp}{/* Period parameters */  }
+\PY{c+cp}{\PYZsh{}}\PY{c+cp}{define N 624}
+\PY{c+cp}{\PYZsh{}}\PY{c+cp}{define M 397}
+\PY{c+cp}{\PYZsh{}}\PY{c+cp}{define MATRIX\PYZus{}A 0x9908b0dfUL   }\PY{c+cm}{/* constant vector a */}
+\PY{c+cp}{\PYZsh{}}\PY{c+cp}{define UPPER\PYZus{}MASK 0x80000000UL }\PY{c+cm}{/* most significant w-r bits */}
+\PY{c+cp}{\PYZsh{}}\PY{c+cp}{define LOWER\PYZus{}MASK 0x7fffffffUL }\PY{c+cm}{/* least significant r bits */}
+
+\PY{k}{static} \PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{mt}\PY{p}{[}\PY{n}{N}\PY{p}{]}\PY{p}{;} \PY{c+cm}{/* the array for the state vector  */}
+\PY{k}{static} \PY{k+kt}{int} \PY{n}{mti}\PY{o}{=}\PY{n}{N}\PY{o}{+}\PY{l+m+mi}{1}\PY{p}{;} \PY{c+cm}{/* mti==N+1 means mt[N] is not initialized */}
+
+\PY{c+cm}{/* initializes mt[N] with a seed */}
+\PY{k+kt}{void} \PY{n+nf}{init\PYZus{}genrand}\PY{p}{(}\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{s}\PY{p}{)}
+\PY{p}{\PYZob{}}
+	\PY{n}{mt}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{o}{=} \PY{n}{s} \PY{o}{&} \PY{l+m+mh}{0xffffffffUL}\PY{p}{;}
+	\PY{k}{for} \PY{p}{(}\PY{n}{mti}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{;} \PY{n}{mti}\PY{o}{<}\PY{n}{N}\PY{p}{;} \PY{n}{mti}\PY{o}{+}\PY{o}{+}\PY{p}{)} \PY{p}{\PYZob{}}
+		\PY{n}{mt}\PY{p}{[}\PY{n}{mti}\PY{p}{]} \PY{o}{=} 
+			\PY{p}{(}\PY{l+m+mi}{1812433253UL} \PY{o}{*} \PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{mti}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]} \PY{o}{\PYZca{}} \PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{mti}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]} \PY{o}{>}\PY{o}{>} \PY{l+m+mi}{30}\PY{p}{)}\PY{p}{)} \PY{o}{+} \PY{n}{mti}\PY{p}{)}\PY{p}{;} 
+		\PY{c+cm}{/* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */}
+		\PY{c+cm}{/* In the previous versions, MSBs of the seed affect   */}
+		\PY{c+cm}{/* only MSBs of the array mt[].                        */}
+		\PY{c+cm}{/* 2002/01/09 modified by Makoto Matsumoto             */}
+		\PY{n}{mt}\PY{p}{[}\PY{n}{mti}\PY{p}{]} \PY{o}{&}\PY{o}{=} \PY{l+m+mh}{0xffffffffUL}\PY{p}{;}
+		\PY{c+cm}{/* for >32 bit machines */}
+	\PY{p}{\PYZcb{}}
+\PY{p}{\PYZcb{}}
+
+\PY{c+cm}{/* initialize by an array with array-length */}
+\PY{c+cm}{/* init\PYZus{}key is the array for initializing keys */}
+\PY{c+cm}{/* key\PYZus{}length is its length */}
+\PY{c+cm}{/* slight change for C++, 2004/2/26 */}
+\PY{k+kt}{void} \PY{n+nf}{init\PYZus{}by\PYZus{}array}\PY{p}{(}\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{init\PYZus{}key}\PY{p}{[}\PY{p}{]}\PY{p}{,} \PY{k+kt}{int} \PY{n}{key\PYZus{}length}\PY{p}{)}
+\PY{p}{\PYZob{}}
+	\PY{k+kt}{int} \PY{n}{i}\PY{p}{,} \PY{n}{j}\PY{p}{,} \PY{n}{k}\PY{p}{;}
+	\PY{n}{init\PYZus{}genrand}\PY{p}{(}\PY{l+m+mi}{19650218UL}\PY{p}{)}\PY{p}{;}
+	\PY{n}{i}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{;} \PY{n}{j}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{;}
+	\PY{n}{k} \PY{o}{=} \PY{p}{(}\PY{n}{N}\PY{o}{>}\PY{n}{key\PYZus{}length} \PY{o}{?} \PY{n}{N} \PY{o}{:} \PY{n}{key\PYZus{}length}\PY{p}{)}\PY{p}{;}
+	\PY{k}{for} \PY{p}{(}\PY{p}{;} \PY{n}{k}\PY{p}{;} \PY{n}{k}\PY{o}{-}\PY{o}{-}\PY{p}{)} \PY{p}{\PYZob{}}
+		\PY{n}{mt}\PY{p}{[}\PY{n}{i}\PY{p}{]} \PY{o}{=} \PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{i}\PY{p}{]} \PY{o}{\PYZca{}} \PY{p}{(}\PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{i}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]} \PY{o}{\PYZca{}} \PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{i}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]} \PY{o}{>}\PY{o}{>} \PY{l+m+mi}{30}\PY{p}{)}\PY{p}{)} \PY{o}{*} \PY{l+m+mi}{1664525UL}\PY{p}{)}\PY{p}{)}
+			\PY{o}{+} \PY{n}{init\PYZus{}key}\PY{p}{[}\PY{n}{j}\PY{p}{]} \PY{o}{+} \PY{n}{j}\PY{p}{;} \PY{c+cm}{/* non linear */}
+		\PY{n}{mt}\PY{p}{[}\PY{n}{i}\PY{p}{]} \PY{o}{&}\PY{o}{=} \PY{l+m+mh}{0xffffffffUL}\PY{p}{;} \PY{c+cm}{/* for WORDSIZE > 32 machines */}
+		\PY{n}{i}\PY{o}{+}\PY{o}{+}\PY{p}{;} \PY{n}{j}\PY{o}{+}\PY{o}{+}\PY{p}{;}
+		\PY{k}{if} \PY{p}{(}\PY{n}{i}\PY{o}{>}\PY{o}{=}\PY{n}{N}\PY{p}{)} \PY{p}{\PYZob{}} \PY{n}{mt}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]} \PY{o}{=} \PY{n}{mt}\PY{p}{[}\PY{n}{N}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]}\PY{p}{;} \PY{n}{i}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{;} \PY{p}{\PYZcb{}}
+		\PY{k}{if} \PY{p}{(}\PY{n}{j}\PY{o}{>}\PY{o}{=}\PY{n}{key\PYZus{}length}\PY{p}{)} \PY{n}{j}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{;}
+	\PY{p}{\PYZcb{}}
+	\PY{k}{for} \PY{p}{(}\PY{n}{k}\PY{o}{=}\PY{n}{N}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{;} \PY{n}{k}\PY{p}{;} \PY{n}{k}\PY{o}{-}\PY{o}{-}\PY{p}{)} \PY{p}{\PYZob{}}
+		\PY{n}{mt}\PY{p}{[}\PY{n}{i}\PY{p}{]} \PY{o}{=} \PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{i}\PY{p}{]} \PY{o}{\PYZca{}} \PY{p}{(}\PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{i}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]} \PY{o}{\PYZca{}} \PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{i}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]} \PY{o}{>}\PY{o}{>} \PY{l+m+mi}{30}\PY{p}{)}\PY{p}{)} \PY{o}{*} \PY{l+m+mi}{1566083941UL}\PY{p}{)}\PY{p}{)}
+			\PY{o}{-} \PY{n}{i}\PY{p}{;} \PY{c+cm}{/* non linear */}
+		\PY{n}{mt}\PY{p}{[}\PY{n}{i}\PY{p}{]} \PY{o}{&}\PY{o}{=} \PY{l+m+mh}{0xffffffffUL}\PY{p}{;} \PY{c+cm}{/* for WORDSIZE > 32 machines */}
+		\PY{n}{i}\PY{o}{+}\PY{o}{+}\PY{p}{;}
+		\PY{k}{if} \PY{p}{(}\PY{n}{i}\PY{o}{>}\PY{o}{=}\PY{n}{N}\PY{p}{)} \PY{p}{\PYZob{}} \PY{n}{mt}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]} \PY{o}{=} \PY{n}{mt}\PY{p}{[}\PY{n}{N}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]}\PY{p}{;} \PY{n}{i}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{;} \PY{p}{\PYZcb{}}
+	\PY{p}{\PYZcb{}}
+
+	\PY{n}{mt}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]} \PY{o}{=} \PY{l+m+mh}{0x80000000UL}\PY{p}{;} \PY{c+cm}{/* MSB is 1; assuring non-zero initial array */} 
+\PY{p}{\PYZcb{}}
+
+\PY{c+cm}{/* generates a random number on [0,0xffffffff]-interval */}
+\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n+nf}{genrand\PYZus{}int32}\PY{p}{(}\PY{k+kt}{void}\PY{p}{)}
+\PY{p}{\PYZob{}}
+	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{y}\PY{p}{;}
+	\PY{k}{static} \PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{mag01}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{]}\PY{o}{=}\PY{p}{\PYZob{}}\PY{l+m+mh}{0x0UL}\PY{p}{,} \PY{n}{MATRIX\PYZus{}A}\PY{p}{\PYZcb{}}\PY{p}{;}
+	\PY{c+cm}{/* mag01[x] = x * MATRIX\PYZus{}A  for x=0,1 */}
+
+	\PY{k}{if} \PY{p}{(}\PY{n}{mti} \PY{o}{>}\PY{o}{=} \PY{n}{N}\PY{p}{)} \PY{p}{\PYZob{}} \PY{c+cm}{/* generate N words at one time */}
+		\PY{k+kt}{int} \PY{n}{kk}\PY{p}{;}
+
+		\PY{k}{if} \PY{p}{(}\PY{n}{mti} \PY{o}{=}\PY{o}{=} \PY{n}{N}\PY{o}{+}\PY{l+m+mi}{1}\PY{p}{)}   \PY{c+cm}{/* if init\PYZus{}genrand() has not been called, */}
+			\PY{n}{init\PYZus{}genrand}\PY{p}{(}\PY{l+m+mi}{5489UL}\PY{p}{)}\PY{p}{;} \PY{c+cm}{/* a default initial seed is used */}
+
+		\PY{k}{for} \PY{p}{(}\PY{n}{kk}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{;}\PY{n}{kk}\PY{o}{<}\PY{n}{N}\PY{o}{-}\PY{n}{M}\PY{p}{;}\PY{n}{kk}\PY{o}{+}\PY{o}{+}\PY{p}{)} \PY{p}{\PYZob{}}
+			\PY{n}{y} \PY{o}{=} \PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{kk}\PY{p}{]}\PY{o}{&}\PY{n}{UPPER\PYZus{}MASK}\PY{p}{)}\PY{o}{|}\PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{kk}\PY{o}{+}\PY{l+m+mi}{1}\PY{p}{]}\PY{o}{&}\PY{n}{LOWER\PYZus{}MASK}\PY{p}{)}\PY{p}{;}
+			\PY{n}{mt}\PY{p}{[}\PY{n}{kk}\PY{p}{]} \PY{o}{=} \PY{n}{mt}\PY{p}{[}\PY{n}{kk}\PY{o}{+}\PY{n}{M}\PY{p}{]} \PY{o}{\PYZca{}} \PY{p}{(}\PY{n}{y} \PY{o}{>}\PY{o}{>} \PY{l+m+mi}{1}\PY{p}{)} \PY{o}{\PYZca{}} \PY{n}{mag01}\PY{p}{[}\PY{n}{y} \PY{o}{&} \PY{l+m+mh}{0x1UL}\PY{p}{]}\PY{p}{;}
+		\PY{p}{\PYZcb{}}
+		\PY{k}{for} \PY{p}{(}\PY{p}{;}\PY{n}{kk}\PY{o}{<}\PY{n}{N}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{;}\PY{n}{kk}\PY{o}{+}\PY{o}{+}\PY{p}{)} \PY{p}{\PYZob{}}
+			\PY{n}{y} \PY{o}{=} \PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{kk}\PY{p}{]}\PY{o}{&}\PY{n}{UPPER\PYZus{}MASK}\PY{p}{)}\PY{o}{|}\PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{kk}\PY{o}{+}\PY{l+m+mi}{1}\PY{p}{]}\PY{o}{&}\PY{n}{LOWER\PYZus{}MASK}\PY{p}{)}\PY{p}{;}
+			\PY{n}{mt}\PY{p}{[}\PY{n}{kk}\PY{p}{]} \PY{o}{=} \PY{n}{mt}\PY{p}{[}\PY{n}{kk}\PY{o}{+}\PY{p}{(}\PY{n}{M}\PY{o}{-}\PY{n}{N}\PY{p}{)}\PY{p}{]} \PY{o}{\PYZca{}} \PY{p}{(}\PY{n}{y} \PY{o}{>}\PY{o}{>} \PY{l+m+mi}{1}\PY{p}{)} \PY{o}{\PYZca{}} \PY{n}{mag01}\PY{p}{[}\PY{n}{y} \PY{o}{&} \PY{l+m+mh}{0x1UL}\PY{p}{]}\PY{p}{;}
+		\PY{p}{\PYZcb{}}
+		\PY{n}{y} \PY{o}{=} \PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{n}{N}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]}\PY{o}{&}\PY{n}{UPPER\PYZus{}MASK}\PY{p}{)}\PY{o}{|}\PY{p}{(}\PY{n}{mt}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{o}{&}\PY{n}{LOWER\PYZus{}MASK}\PY{p}{)}\PY{p}{;}
+		\PY{n}{mt}\PY{p}{[}\PY{n}{N}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]} \PY{o}{=} \PY{n}{mt}\PY{p}{[}\PY{n}{M}\PY{o}{-}\PY{l+m+mi}{1}\PY{p}{]} \PY{o}{\PYZca{}} \PY{p}{(}\PY{n}{y} \PY{o}{>}\PY{o}{>} \PY{l+m+mi}{1}\PY{p}{)} \PY{o}{\PYZca{}} \PY{n}{mag01}\PY{p}{[}\PY{n}{y} \PY{o}{&} \PY{l+m+mh}{0x1UL}\PY{p}{]}\PY{p}{;}
+
+		\PY{n}{mti} \PY{o}{=} \PY{l+m+mi}{0}\PY{p}{;}
+	\PY{p}{\PYZcb{}}
+  
+	\PY{n}{y} \PY{o}{=} \PY{n}{mt}\PY{p}{[}\PY{n}{mti}\PY{o}{+}\PY{o}{+}\PY{p}{]}\PY{p}{;}
+
+	\PY{c+cm}{/* Tempering */}
+	\PY{n}{y} \PY{o}{\PYZca{}}\PY{o}{=} \PY{p}{(}\PY{n}{y} \PY{o}{>}\PY{o}{>} \PY{l+m+mi}{11}\PY{p}{)}\PY{p}{;}
+	\PY{n}{y} \PY{o}{\PYZca{}}\PY{o}{=} \PY{p}{(}\PY{n}{y} \PY{o}{<}\PY{o}{<} \PY{l+m+mi}{7}\PY{p}{)} \PY{o}{&} \PY{l+m+mh}{0x9d2c5680UL}\PY{p}{;}
+	\PY{n}{y} \PY{o}{\PYZca{}}\PY{o}{=} \PY{p}{(}\PY{n}{y} \PY{o}{<}\PY{o}{<} \PY{l+m+mi}{15}\PY{p}{)} \PY{o}{&} \PY{l+m+mh}{0xefc60000UL}\PY{p}{;}
+	\PY{n}{y} \PY{o}{\PYZca{}}\PY{o}{=} \PY{p}{(}\PY{n}{y} \PY{o}{>}\PY{o}{>} \PY{l+m+mi}{18}\PY{p}{)}\PY{p}{;}
+
+	\PY{k}{return} \PY{n}{y}\PY{p}{;}
+\PY{p}{\PYZcb{}}
+
+\PY{c+cm}{/* generates a random number on [0,0x7fffffff]-interval */}
+\PY{k+kt}{long} \PY{n+nf}{genrand\PYZus{}int31}\PY{p}{(}\PY{k+kt}{void}\PY{p}{)}
+\PY{p}{\PYZob{}}
+	\PY{k}{return} \PY{p}{(}\PY{k+kt}{long}\PY{p}{)}\PY{p}{(}\PY{n}{genrand\PYZus{}int32}\PY{p}{(}\PY{p}{)}\PY{o}{>}\PY{o}{>}\PY{l+m+mi}{1}\PY{p}{)}\PY{p}{;}
+\PY{p}{\PYZcb{}}
+
+\PY{c+cm}{/* generates a random number on [0,1]-real-interval */}
+\PY{k+kt}{double} \PY{n+nf}{genrand\PYZus{}real1}\PY{p}{(}\PY{k+kt}{void}\PY{p}{)}
+\PY{p}{\PYZob{}}
+	\PY{k}{return} \PY{n}{genrand\PYZus{}int32}\PY{p}{(}\PY{p}{)}\PY{o}{*}\PY{p}{(}\PY{l+m+mf}{1.0}\PY{o}{/}\PY{l+m+mf}{4294967295.0}\PY{p}{)}\PY{p}{;} 
+	\PY{c+cm}{/* divided by 2\PYZca{}32-1 */} 
+\PY{p}{\PYZcb{}}
+
+\PY{c+cm}{/* generates a random number on [0,1)-real-interval */}
+\PY{k+kt}{double} \PY{n+nf}{genrand\PYZus{}real2}\PY{p}{(}\PY{k+kt}{void}\PY{p}{)}
+\PY{p}{\PYZob{}}
+	\PY{k}{return} \PY{n}{genrand\PYZus{}int32}\PY{p}{(}\PY{p}{)}\PY{o}{*}\PY{p}{(}\PY{l+m+mf}{1.0}\PY{o}{/}\PY{l+m+mf}{4294967296.0}\PY{p}{)}\PY{p}{;} 
+	\PY{c+cm}{/* divided by 2\PYZca{}32 */}
+\PY{p}{\PYZcb{}}
+
+\PY{c+cm}{/* generates a random number on (0,1)-real-interval */}
+\PY{k+kt}{double} \PY{n+nf}{genrand\PYZus{}real3}\PY{p}{(}\PY{k+kt}{void}\PY{p}{)}
+\PY{p}{\PYZob{}}
+	\PY{k}{return} \PY{p}{(}\PY{p}{(}\PY{p}{(}\PY{k+kt}{double}\PY{p}{)}\PY{n}{genrand\PYZus{}int32}\PY{p}{(}\PY{p}{)}\PY{p}{)} \PY{o}{+} \PY{l+m+mf}{0.5}\PY{p}{)}\PY{o}{*}\PY{p}{(}\PY{l+m+mf}{1.0}\PY{o}{/}\PY{l+m+mf}{4294967296.0}\PY{p}{)}\PY{p}{;} 
+	\PY{c+cm}{/* divided by 2\PYZca{}32 */}
+\PY{p}{\PYZcb{}}
+
+\PY{c+cm}{/* generates a random number on [0,1) with 53-bit resolution*/}
+\PY{k+kt}{double} \PY{n+nf}{genrand\PYZus{}res53}\PY{p}{(}\PY{k+kt}{void}\PY{p}{)} 
+\PY{p}{\PYZob{}} 
+	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{a}\PY{o}{=}\PY{n}{genrand\PYZus{}int32}\PY{p}{(}\PY{p}{)}\PY{o}{>}\PY{o}{>}\PY{l+m+mi}{5}\PY{p}{,} \PY{n}{b}\PY{o}{=}\PY{n}{genrand\PYZus{}int32}\PY{p}{(}\PY{p}{)}\PY{o}{>}\PY{o}{>}\PY{l+m+mi}{6}\PY{p}{;} 
+	\PY{k}{return}\PY{p}{(}\PY{n}{a}\PY{o}{*}\PY{l+m+mf}{67108864.0}\PY{o}{+}\PY{n}{b}\PY{p}{)}\PY{o}{*}\PY{p}{(}\PY{l+m+mf}{1.0}\PY{o}{/}\PY{l+m+mf}{9007199254740992.0}\PY{p}{)}\PY{p}{;} 
+\PY{p}{\PYZcb{}} 
+\PY{c+cm}{/* These real versions are due to Isaku Wada, 2002/01/09 added */}
+
+\PY{k+kt}{int} \PY{n+nf}{main}\PY{p}{(}\PY{k+kt}{void}\PY{p}{)}
+\PY{p}{\PYZob{}}
+	\PY{k+kt}{int} \PY{n}{i}\PY{p}{;}
+	\PY{k+kt}{unsigned} \PY{k+kt}{long} \PY{n}{init}\PY{p}{[}\PY{l+m+mi}{4}\PY{p}{]}\PY{o}{=}\PY{p}{\PYZob{}}\PY{l+m+mh}{0x123}\PY{p}{,} \PY{l+m+mh}{0x234}\PY{p}{,} \PY{l+m+mh}{0x345}\PY{p}{,} \PY{l+m+mh}{0x456}\PY{p}{\PYZcb{}}\PY{p}{,} \PY{n}{length}\PY{o}{=}\PY{l+m+mi}{4}\PY{p}{;}
+	\PY{n}{init\PYZus{}by\PYZus{}array}\PY{p}{(}\PY{n}{init}\PY{p}{,} \PY{n}{length}\PY{p}{)}\PY{p}{;}
+	\PY{n}{printf}\PY{p}{(}\PY{l+s}{"}\PY{l+s}{1000 outputs of genrand\PYZus{}int32()}\PY{l+s+se}{\PYZbs{}n}\PY{l+s}{"}\PY{p}{)}\PY{p}{;}
+	\PY{k}{for} \PY{p}{(}\PY{n}{i}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{;} \PY{n}{i}\PY{o}{<}\PY{l+m+mi}{1000}\PY{p}{;} \PY{n}{i}\PY{o}{+}\PY{o}{+}\PY{p}{)} \PY{p}{\PYZob{}}
+		\PY{n}{printf}\PY{p}{(}\PY{l+s}{"}\PY{l+s}{\PYZpc{}10lu }\PY{l+s}{"}\PY{p}{,} \PY{n}{genrand\PYZus{}int32}\PY{p}{(}\PY{p}{)}\PY{p}{)}\PY{p}{;}
+		\PY{k}{if} \PY{p}{(}\PY{n}{i}\PY{o}{\PYZpc{}}\PY{l+m+mi}{5}\PY{o}{=}\PY{o}{=}\PY{l+m+mi}{4}\PY{p}{)} \PY{n}{printf}\PY{p}{(}\PY{l+s}{"}\PY{l+s+se}{\PYZbs{}n}\PY{l+s}{"}\PY{p}{)}\PY{p}{;}
+	\PY{p}{\PYZcb{}}
+	\PY{n}{printf}\PY{p}{(}\PY{l+s}{"}\PY{l+s+se}{\PYZbs{}n}\PY{l+s}{1000 outputs of genrand\PYZus{}real2()}\PY{l+s+se}{\PYZbs{}n}\PY{l+s}{"}\PY{p}{)}\PY{p}{;}
+	\PY{k}{for} \PY{p}{(}\PY{n}{i}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{;} \PY{n}{i}\PY{o}{<}\PY{l+m+mi}{1000}\PY{p}{;} \PY{n}{i}\PY{o}{+}\PY{o}{+}\PY{p}{)} \PY{p}{\PYZob{}}
+		\PY{n}{printf}\PY{p}{(}\PY{l+s}{"}\PY{l+s}{\PYZpc{}10.8f }\PY{l+s}{"}\PY{p}{,} \PY{n}{genrand\PYZus{}real2}\PY{p}{(}\PY{p}{)}\PY{p}{)}\PY{p}{;}
+		\PY{k}{if} \PY{p}{(}\PY{n}{i}\PY{o}{\PYZpc{}}\PY{l+m+mi}{5}\PY{o}{=}\PY{o}{=}\PY{l+m+mi}{4}\PY{p}{)} \PY{n}{printf}\PY{p}{(}\PY{l+s}{"}\PY{l+s+se}{\PYZbs{}n}\PY{l+s}{"}\PY{p}{)}\PY{p}{;}
+	\PY{p}{\PYZcb{}}
+	\PY{k}{return} \PY{l+m+mi}{0}\PY{p}{;}
+\PY{p}{\PYZcb{}}
+\end{Verbatim}
