@@ -1,3 +1,12 @@
+/*********************************************
+* The Producer-Consumer Problem
+* Author : Chauncey Yan,
+*          Wang Xiaomei,
+*          Guo 
+* Goal   : Producers create items of some kind and 
+*          add them to a data structure; consumers 
+*          remove the items and process them.
+**********************************************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -63,7 +72,7 @@ void *printNumbers()
         int seed;
         init_genrand((unsigned long)&seed);
         sleep(1);
-        sem_trywait(sem1);
+        sem_trywait(s1);
         printf("%d\n",rnd_int());
         fflush(stdout);
     }
@@ -74,6 +83,7 @@ int main(int argc, char *argv[], char *envp[])
 {
     char *c = "semaphore 1";
     //char *b = "semaphore 2";
+    int s;
 
     s1 = sem_open(c, O_CREAT, 0666, 0);
     //s2 = sem_open(b, O_CREAT, 0666, 0);
@@ -81,7 +91,7 @@ int main(int argc, char *argv[], char *envp[])
 
     threads = (pthread_t *) malloc(100 * sizeof(pthread_t));
     pthread_create(&threads[0], NULL,print1,NULL);
-    for (s = 1;(s < 100;s++) {
+    for (s = 1;s < 100;s++) {
             pthread_create(&threads[s], NULL,printNumbers,NULL);
             }
             for (s = 0; s < 100; s++) {
