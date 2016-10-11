@@ -1,3 +1,0 @@
-\contentsline {section}{\numberline {1}Section 1}{1}
-\contentsline {subsection}{\numberline {1.1}blah}{1}
-\contentsline {subsubsection}{\numberline {1.1.1}yada yada}{1}

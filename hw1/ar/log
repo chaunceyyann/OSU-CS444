@@ -1,0 +1,66 @@
+* commit 2638177 (HEAD, origin/master, master)
+| Author: Chauncey <chaunceyyann@gmail.com>
+| Date:   Sat Oct 8 15:33:33 2016 -0700
+| 
+|     Added the solution for Concurrency problem 1 for real.
+|  
+* commit 4f115d8
+| Author: xiaomei7 <xiaomei.wang07@gmail.com>
+| Date:   Fri Oct 7 17:35:21 2016 -0700
+| 
+|     haha
+|  
+* commit f0f1afa
+| Author: xiaomei <eunice707@hotmail.com>
+| Date:   Fri Oct 7 17:09:30 2016 -0700
+| 
+|     I deleted some file.
+|  
+* commit 89f598e
+| Author: Chauncey <chaunceyyann@gmail.com>
+| Date:   Sun Oct 2 03:27:11 2016 -0700
+| 
+|     Cleaned up the dir. Stop uploading archives.
+|  
+* commit 2491f72
+| Author: Chauncey Yan <chaunceyyann@gmail.com>
+| Date:   Sun Oct 2 03:16:26 2016 -0700
+| 
+|     Update README.md
+|  
+* commit ceceae5
+| Author: Chauncey <chaunceyyann@gmail.com>
+| Date:   Sun Oct 2 03:07:32 2016 -0700
+| 
+|     Added the project and concurrency problem description markdown file
+|  
+* commit ab2b11d
+| Author: Chauncey <chaunceyyann@gmail.com>
+| Date:   Sat Oct 1 04:10:18 2016 -0700
+| 
+|     Added example tex file for generating git log graph(Not working yet)
+|  
+* commit 86b8f25
+| Author: Chauncey <chaunceyyann@gmail.com>
+| Date:   Sat Oct 1 02:19:02 2016 -0700
+| 
+|     Added tex files and  solotion to the concurrent problem 1(need come up with a testing plan for write-up)
+|    
+*   commit 35a4da2
+|\  Merge: fc0b31d b43ffa1
+| | Author: Chauncey <chaunceyyann@gmail.com>
+| | Date:   Sat Oct 1 01:57:03 2016 -0700
+| | 
+| |     Merge branch 'master' of https://github.com/cyanjin/cs444-015
+| |   
+| * commit b43ffa1
+|   Author: Chauncey Yan <chaunceyyann@gmail.com>
+|   Date:   Sat Oct 1 01:24:52 2016 -0700
+|   
+|       Initial commit
+|  
+* commit fc0b31d
+  Author: Chauncey <chaunceyyann@gmail.com>
+  Date:   Sat Oct 1 01:54:05 2016 -0700
+  
+      Initial commet: Configuration files upload

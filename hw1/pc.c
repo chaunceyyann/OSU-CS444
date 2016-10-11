@@ -1,8 +1,8 @@
 /**************************************************
  * Producer-Consumer Problem
  * Author : Chauncey Yan,
- *          Wang Xiaomei,
- *          Guo Xilun
+ *          Wang, Xiaomei,
+ *          Guo, Xilun
  * Goal   : Producers create items of some kind and
  *          add them to a data structure; consumers
  *          remove the items and process them.
@@ -42,6 +42,9 @@ int rd_rst;
 unsigned long program_start, elapse;
 struct t_elements buffer[32];
 
+/*****************************************
+ * Random a number and second number in ASM 
+ *****************************************/
 unsigned long rd_int()
 {
     if (rd_rst == 1 ){ //rdrand()
@@ -57,6 +60,9 @@ unsigned long rd_int()
     }
 }
 
+/*****************************************
+ * Print out the buffer every second
+ *****************************************/
 void check_rd()
 {
     unsigned long eax = 1, ecx,ebx;
@@ -75,6 +81,7 @@ void check_rd()
     printf("Intel chip not detected! Using Mersenne Twister.\n");
     rd_rst = 0;
 }
+
 /*****************************************
  * Print out the buffer every second
  *****************************************/
@@ -94,6 +101,9 @@ void printbuf(){
     printf("\n");
 }
 
+/*****************************************
+ * Processing consumer(s) to consume from the buffer
+ *****************************************/
 void *consumer_thread(void *a)
 {
     do {
@@ -108,7 +118,7 @@ void *consumer_thread(void *a)
         for (z = 31; z >= 0; z--) {
             if (buffer[z].num != NULL) {
                 //sleep(buffer[z].sec); //consumer sleep with the sec producer create
-                pthread_mutex_lock(&mutex_sum);
+                pthread_mutex_lock(&mutex_sum); //lock the pthread in order to protect muti consumers to consume the same index from the buffer.
                 elapse = (unsigned)time(NULL)-program_start;
 
                 printf("\nTime elapsed %ds\n", elapse);
@@ -116,7 +126,7 @@ void *consumer_thread(void *a)
                 printf("Consumer%d Consumed char   : %c\n", tid, buffer[z].num);
                 printf("Consumer%d Consumed second : %d\n", tid, buffer[z].sec);
                 
-                s_time = buffer[z].sec;
+                s_time = buffer[z].sec; //save the random second number before it consume 
                 
                 buffer[z].num = NULL;//consuming
                 buffer[z].sec = NULL;
@@ -134,12 +144,15 @@ void *consumer_thread(void *a)
     while (1);
 }
 
+/*****************************************
+ * Processing producer(s) to produce a random number and a random second number, which control how long the consumer need to consume the specific item.  
+ *****************************************/
 void *producer_thread(void *a)
 {
     do {
         int j = 0;
         int tid = pthread_self();
-        sleep(rd_int()%5+3);    // 3-7s 
+        sleep(rd_int()%5+3);    // producing a new item within 3-7 seconds 
         //sleep(2);
         if (buffer[31].sec != NULL) {
             sem_wait(s1);
@@ -149,8 +162,8 @@ void *producer_thread(void *a)
 
         for (j = 0; j < 32; j++) {
             if (buffer[j].num == NULL) {
-                buffer[j].num = rd_int() % 25 + 65; // A-Z
-                buffer[j].sec = rd_int() % 8 + 2;   // 2-9s 
+                buffer[j].num = rd_int() % 25 + 65; // create a random number A-Z
+                buffer[j].sec = rd_int() % 8 + 2;   // consuming an item within 2-9 seconds 
                 //buffer[j].sec = 4;
                 
                 elapse = (unsigned)time(NULL)-program_start;
@@ -190,7 +203,7 @@ int main(int argc, char *argv[], char *envp[])
 
     threads = (pthread_t *) malloc((proN + conN) * sizeof(pthread_t));
     pthread_mutex_init(&mutex_sum, NULL);
-    for (s = 0, z = 0; (s + z) < (proN + conN);) {
+    for (s = 0, z = 0; (s + z) < (proN + conN);) {    //make sure at least one consumer and one producer
         if (s < proN) {
             pthread_create(&threads[s], NULL, producer_thread,NULL);
             s++;

@@ -1,0 +1,181 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+\usepackage{booktabs}
+
+%random comment
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\newcommand{\toc}{\tableofcontents}
+
+%\usepackage{hyperref}
+
+\def\name{}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+%% The following metadata will show up in the PDF properties
+% \hypersetup{
+%   colorlinks = false,
+%   urlcolor = black,
+%   pdfauthor = {\name},
+%   pdfkeywords = {cs311 ''operating systems'' files filesystem I/O},
+%   pdftitle = {CS 311 Project 1: UNIX File I/O},
+%   pdfsubject = {CS 311 Project 1},
+%   pdfpagemode = UseNone
+% }
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+
+\begin{center}
+    \textsc{\LARGE CS 444 Group 15}\\
+    { \huge \bfseries Project 1 \\}
+    \emph{Member:}\\
+    Xiaomei \textsc{WANG}
+    Changxu \textsc{YAN}
+    Xilun \textsc{GUO}
+\end{center}
+
+%input the pygmentized output of mt19937ar.c, using a (hopefully) unique name
+%this file only exists at compile time. Feel free to change that.
+
+\section{Command log for running the initial kernel}
+\subsection{Setup the environment variables}
+\subsubsection{bourne based shells}
+source /scratch/opt/environment-setup-i586-poky-linux
+\subsubsection{tcsh/csh shell}
+source /scratch/opt/environment-setup-i586-poky-linux.csh
+\subsection{copy the starting kernel, driver file, and other related files}
+cp -R /scratch/fall2016/files/ .
+\subsection{run the initial version of qemu}
+qemu-system-i386 -gdb tcp::5515 -S -nographic -kernel bzImage-qemux86.bin -drive file=core-image-lsb-sdk-qemux86.ext3,if=virtio -enable-kvm -net none -usb -localtime --no-reboot --append "root=/dev/vda rw console=ttyS0 debug"
+\subsection{Open gdb in a seperate terminal and boot qemu}
+gdb
+
+target remote : 5515
+
+continue
+\subsection{Log in with root and no password from the qemu terminal}
+\section{Command log for running the yocto kernel within the repository}
+\subsection{Create new repository}
+git init
+\subsection{Acquire Yocto 3.14 kernel and switch to v3.14.26 tag}
+git clone git://git.yoctoproject.org/linux-yocto-3.14
+
+cd linux-yocto-3.14
+
+git checkout tags/v3.14.26
+\subsection{Copy configuration file to linux-yocto}
+cd ..
+
+cp config-3.14.26-yocto-qemu linux-yocto-3.14/.config
+\subsection{Build the new instance of kernel}
+cd linux-yocto-3.14
+
+make -j4 all
+
+\subsection{Run the qemu with the new generated inmage}
+qemu-system-i386 -gdb tcp::5515 -S -nographic -kernel arch/x86/boot/bzImage -drive file=/scratch/fall2016/cs444-group15/core-image-lsb-sdk-qemux86.ext3,if=virtio -enable-kvm -net none -usb -localtime --no-reboot --append "root=/dev/vda rw console=ttyS0 debug"
+\subsection{Using gdb to boot qemu}
+gdb
+
+target remote : 5515
+
+continue
+\subsection{Log in with root and no password from the qemu terminal}
+
+\section{Qemu-system-i386 FLAG}
+\begin{tabular}{@{}ccc@{}}
+    \toprule
+    FLAG        & Usage                                                          \\ \midrule
+    -gdb        & Run the virtual machine in gdb mode                            \\
+    -S          & Freeze CPU at startup                                          \\
+    -nographic  & Disable graphical output and redirect serial I/Os to console   \\
+    -kernel     & Use ' ' as kernel image                                        \\
+    -drive      & Use ' ' as drive image                                         \\
+    -enable-kvm & Enable KVM full virtualization support                         \\
+    -net        & Zero network devices                                           \\
+    -usb        & Enable the usb driver                                          \\
+    -localtime  & Set localtime                                                  \\ \bottomrule
+\end{tabular}
+
+
+\section{Concurrency}
+1. 
+The main point this assignment are: get to know and understand the kernel; Understand the basic ideas of concurrent programming; learn how to use Tex; learn how to set up Linux environment. 
+
+2.
+We create two named semaphores and lots of pthreads to solve the producer-comsumer problem, corresponding to the threads specified on the command line: the first number is the number of producer threads and the second is the consumer threads. First, the threads are created, then they're forked; so, when the threads are joined, that means they're terminated. Inside the source code, there is a static member that corresponds to the pthread\_mutex lock and the initial declaration of the consumer and producer method. We need a struct to hold the number the time. In order to check if the system support rdrand instruction of not, check\_rd() is called. It runs asm code "cpuid \%0", which return the cpu architecture information to a variable in terms of binary. Specifically, CPUID was called with register EAX = 1. ECX will return a 32 bits data that include all cpu info. If bit 30 is return 1 then the system support rdrand. After the system has rdrand support, rnd\_int() is going to generate an unsigned int using the rdrand method. The way to using rdrand is through asm code. it generate an unsigned long integer from cpu and store it in a variable. On the other hand, if the system has no rdrand support, such as OS-class, rnd\_int() is going to generate an unsigned int using Mersenne Twister method. First, we need to initialize mt with a seed array. Then we  call genrand\_int32() to get a random unsigned integer.
+
+Within the consumer\_thread method, there is a do-while loop that runs infinitely. As specified in the directions, if the buffer is empty, then sem\_wait is called on the semaphore and the thread waits. Once the producer\_thread method calls sem\_post from the other method after adding an item to the buffer will the semaphore be released.\par
+
+After the semaphore is released, the pthread is locked, and then the thread sleeps for the time specified within the first element. The number that is assigned to the first element is then printed. After this item is "consumed," the element is overwritten by all the previous elements within the buffer, and then the semaphore that is used by the producer problem in order to signify that the buffer is ready to add an additional item when filled is posted, so that the producer may add another item. After the first item is removed from the buffer, the pthread is unlocked, and the do-while loop runs for a second iteration, and all subsequent iterations.\par
+
+For the producer\_thread method, there is a do-while loop that runs infinitely. As specified in the directions, if the buffer is full, then sem\_wait is called on the semaphore and the thread waits. Once the consumer\_thread method calls sem\_post from the other method after removing an item from the buffer will the semaphore be released.\par
+
+After the semaphore is released, the random number generator is initialized and the producer thread sleeps for a time between 2-7 seconds. Then the pthread is locked. Afterwards, then the next empty element of the buffer is filled with the struct containing the two random numbers and then the semaphore used by the consumer problem in order to signify that the buffer is ready to remove an additional item when the buffer is empty is posted, so that the consumer may remove another item. After the item is added to the buffer, the pthread is unlocked, and the do-while loop runs for a second iteration, and all subsequent iterations.\par
+
+3.
+To test the correctness of the solution to the producer and consumer problem. We designed a print out funtion that print everything from the buffer when buffer changes its content. The print out includes who made the change(includes thread id), the new elements been push\/pop from the buffer, and the elements of buffer. However, a nice looking print out does not enssure a perfect working solution. Thus we test the soluion with certain set of thread numbers and fixed sleep time for each type of threads. For example, when testing single thread producer and consumer, we set consumer sleep time at 4 seconds, set producer sleep time at 2 seconds. Thus, we can tell if the mutex actually working by crash consumer and producer together intentionally. During our test, we observed the single producer thread could produce item either before the consumer or after consumer consume the previous item from the buffer. For multiple producer and consumer threads, we used same fixed sleep time of producer and consumer for maxium collisions. The test results are positive and we moved on to finish this write up.    
+
+4.
+Apart from the things mentioned in the first paragraph, here are the additional things we learn: how to use Mutex, Semaphores; how to use gdb and how to debug, etc.g
+
+
+
+\section{Version control log}
+\begin{tabular}{@{}ccc@{}}
+    \toprule
+    Date                & Person   & Message                                                   \\ \midrule
+    Sat Oct 08 15:33:33 & Changxu  & Added the solution for concurrency problem 1              \\
+    Fri Oct 07 17:35:21 & Xiaomei  & version 2                                                 \\
+    Fri Oct 07 17:09:30 & Xiaomei  & Concurrency file                                          \\
+    Sun Oct 02 03:27:11 & Changxu  & Cleaned up the dir                                        \\
+    Sun Oct 02 03:16:26 & Changxu  & Updated README.md, some description files                 \\
+    Sat Oct 01 04:10:18 & Changxu  & Added tex file for generating git log graph               \\
+    Sat Oct 01 02:19:02 & Changxu  & Concurrency file                                          \\ \bottomrule
+\end{tabular}
+
+\section{Work Log}
+\begin{tabular}{@{}ccc@{}}
+    \toprule
+    Date                & Person   & Task                                                      \\ \midrule
+    Sat Oct 1           & Changxu  & pthreads                                                  \\
+    Sat Oct 1           & Changxu  & random number generator                                   \\
+    Sun Oct 2           & Xiaomei  & pthreads                                                  \\
+    Wed Oct 5           & Xilun    & Finished pthreads                                         \\
+    Fri Oct 7           & Xiaoemi  & Multiple threads                                          \\
+    Fri Oct 7           & Changxu  & random number generator                                   \\
+    Mon Oct 10          & Xilun    & Finished integrating                                      \\
+    Mon Oct 10          & Xiaomei  & style guide                                               \\
+    Mon Oct 10          & Chnagxu  & style guide                                               \\ \bottomrule
+\end{tabular}
+
+
+
+\section*{Appendix 1: Source Code}
+\input{__pc.c.tex}
+
+\end{document}
