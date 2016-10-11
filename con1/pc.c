@@ -97,17 +97,17 @@ void printbuf(){
 void *consumer_thread(void *a)
 {
     do {
-        int i = 0;
+        int s_time = 0;
         int z = 0;
         int tid = pthread_self();
-
+        
         if (buffer[0].num == NULL) { //consumers wait if buffer is empty
             sem_wait(s2);
         }
         
         for (z = 31; z >= 0; z--) {
             if (buffer[z].num != NULL) {
-                sleep(buffer[z].sec); //consumer sleep with the sec producer create
+                //sleep(buffer[z].sec); //consumer sleep with the sec producer create
                 pthread_mutex_lock(&mutex_sum);
                 elapse = (unsigned)time(NULL)-program_start;
 
@@ -115,14 +115,18 @@ void *consumer_thread(void *a)
                 printf("Consumer%d Consumed @ buf[%d]\n", tid, z);
                 printf("Consumer%d Consumed char   : %c\n", tid, buffer[z].num);
                 printf("Consumer%d Consumed second : %d\n", tid, buffer[z].sec);
-
+                
+                s_time = buffer[z].sec;
+                
                 buffer[z].num = NULL;//consuming
                 buffer[z].sec = NULL;
 
                 printbuf();
-                
+                 
                 sem_post(s1);
                 pthread_mutex_unlock(&mutex_sum);
+                
+                sleep(s_time); //consumer sleep with the sec producer create
                 break;
             }
         }
