@@ -18,6 +18,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <fcntl.h>
 #include <semaphore.h>
@@ -111,12 +112,12 @@ void *consumer_thread(void *a)
         int z = 0;
         int tid = pthread_self();
         
-        if (buffer[0].num == NULL) { //consumers wait if buffer is empty
+        if (buffer[0].num == 0) { //consumers wait if buffer is empty
             sem_wait(s2);
         }
         
         for (z = 31; z >= 0; z--) {
-            if (buffer[z].num != NULL) {
+            if (buffer[z].num != 0) {
                 //sleep(buffer[z].sec); //consumer sleep with the sec producer create
                 pthread_mutex_lock(&mutex_sum); //lock the pthread in order to protect muti consumers to consume the same index from the buffer.
                 elapse = (unsigned)time(NULL)-program_start;
@@ -128,8 +129,8 @@ void *consumer_thread(void *a)
                 
                 s_time = buffer[z].sec; //save the random second number before it consume 
                 
-                buffer[z].num = NULL;//consuming
-                buffer[z].sec = NULL;
+                buffer[z].num = 0;//consuming
+                buffer[z].sec = 0;
 
                 printbuf();
                  
@@ -154,14 +155,14 @@ void *producer_thread(void *a)
         int tid = pthread_self();
         sleep(rd_int()%5+3);    // producing a new item within 3-7 seconds 
         //sleep(2);
-        if (buffer[31].sec != NULL) {
+        if (buffer[31].sec != 0) {
             sem_wait(s1);
         }
         
         pthread_mutex_lock(&mutex_sum);
 
         for (j = 0; j < 32; j++) {
-            if (buffer[j].num == NULL) {
+            if (buffer[j].num == 0) {
                 buffer[j].num = rd_int() % 25 + 65; // create a random number A-Z
                 buffer[j].sec = rd_int() % 8 + 2;   // consuming an item within 2-9 seconds 
                 //buffer[j].sec = 4;

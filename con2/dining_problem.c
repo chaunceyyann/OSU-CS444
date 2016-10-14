@@ -1,18 +1,23 @@
-/* Concurrenc 2 
- * Group4
- * Arvind Vepa
+/*****************************************************************************
+ * Concurrenc problem 2 
+ * 5 Philosophers have a dinner with 5 forks. They have to share their forks
+ * to eat their plate. Who dont have 2 forks has to wait/think before eat.
+ * Group 15
  * Chauncey Yan
- */
+ * Xiaomei Wang
+ * Xilun Guo
+ ****************************************************************************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <pthread.h>
-#include "mt19937ar.h"
 #include <errno.h>
 #include <mqueue.h>
 #include <signal.h>
+#include "mt19937ar.h"
 
 #define RED     "\x1b[31m"
 #define GREEN   "\x1b[32m"
@@ -30,25 +35,12 @@ int forks[5]={0,0,0,0,0};
 // 0 == thinking, 1 == eating
 int philosophers[5];
 int eat_count[5]={0,0,0,0,0};
-const char *name[]={"0:Aristotle ","1:Kant      ","2:Nietzsche ","3:Plato     ","4:Socrates  "};
+const char *name[]={"0:Aristotle ","1:Kant      ","2:Nietzsche ",
+                    "3:Plato     ","4:Socrates  "};
 const char *stage[]={"think","eat"};
 
 int bowls[5];
 
-unsigned long rdn_int()
-{
-        if (check_rd() == 1 ){ //rdrand()
-                unsigned long ul = 0ul;
-                __asm__ __volatile__(
-                                "rdrand %0"
-                                :"=r"(ul)
-                                );
-                return ul;
-        } else {
-                return genrand_int32();
-
-        }
-}
 int check_rd()
 {
         unsigned long eax = 1, ecx,ebx;
@@ -64,6 +56,20 @@ int check_rd()
                 return 1;
 
         return 0;
+}
+unsigned long rdn_int()
+{
+        if (check_rd() == 1 ){ //rdrand()
+                unsigned long ul = 0ul;
+                __asm__ __volatile__(
+                                "rdrand %0"
+                                :"=r"(ul)
+                                );
+                return ul;
+        } else {
+                return genrand_int32();
+
+        }
 }
 
 void print_table()
@@ -116,8 +122,8 @@ void * get_forks(int *a)
                         forks[c] = 1;
                         pthread_mutex_unlock(&mutex_sum);
                         printf("%s got fork %d and %d.\n",name[*a],b,c);
-		}
-                return;
+                }
+                break;
         }
         while(1);
 }
@@ -164,17 +170,11 @@ void * dinersProblem(int *a)
 int main()
 {
         pthread_t *threads;
-        int v1;
-        int v2;
-        int v3;
-        int v4;
-        int v5;
-
-        v1 = 0;
-        v2 = 1;
-        v3 = 2;
-        v4 = 3;
-        v5 = 4;
+        int v1 = 1;
+        int v2 = 2;
+        int v3 = 3;
+        int v4 = 4;
+        int v5 = 5;
 
         threads = (pthread_t *) malloc(5 * sizeof(pthread_t));
         pthread_mutex_init(&mutex_sum, NULL);
