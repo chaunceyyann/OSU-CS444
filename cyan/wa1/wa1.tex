@@ -1,0 +1,115 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+\usepackage{booktabs}
+
+%random comment
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+\newcommand{\tab}{\hspace*{2em}} % for tabbing
+\newcommand{\toc}{\tableofcontents}
+
+\usepackage{hyperref}
+\usepackage{latexsym}
+
+\def\name{Changxu Yan}
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\vfill
+\begin{center}
+    \textsc{\LARGE CS 444 Group 15}\\
+    { \huge \bfseries Writing assignment 1 \\}
+    \emph{Writer:}\\
+    Changxu \textsc{YAN}
+\end{center}
+
+%input the pygmentized output of mt19937ar.c, using a (hopefully) unique name
+%this file only exists at compile time. Feel free to change that.
+
+\section{CPU scheduling}
+\tab Overview: A scheduler is the mechanism for sharing the CPU between multiple processes in an OS. The scheduler makes it possible to execute multiple programs at the same time, thus sharing the CPU with users of varying needs. The goal of a scheduler is to allocate CPU resource efficiently.At the meantime it has to provide a responsive user experience. scheduler runs determined on policies. A policy is the behavior of the scheduler that determines what process runs when. Changes in policy can result in operating systems that are optimized for specific tasks (such as user responsiveness). Therefore, this is a critical aspect of an operating system \cite{Love}(pg. 43).
+
+\subsection{Linux}
+\tab In the version of the Linux kernel we were working with, the default scheduler was the Completely Fair Scheduler (CFS). The Completely Fair Scheduler (CFS) is a process scheduler. It was introduced into the 2.6.23 release of the Linux kernel. It handles CPU resource allocation for all running processes. It goal at maximizing overall CPU utilization and maximizing user interactive response performance. The idea behind CFS is to model scheduling as if the system had an ideal processor that could multitask perfectly. In this kind of system, each runnable process n would receive 1/n of the CPU time. CFS run processes round-robin style for very small tasks (in quantities called slices of time), so that in a given period of time it will appear as though many processes are running in parallel \cite{Love}(pg. 48-50).
+
+\tab CFS is not the only type of scheduling available in the Linux kernel. The Linux scheduler provides soft real-time behavior, it tries to schedule processes within timing deadlines. Linux provides two real-time scheduling policies, FIFO and round-robin \cite{Love}(pg. 64). sentially queues containing process descriptors for runnable processes. Round-robin scheduling cycles through processes, running each for a pre-specified amount of time known as a timeslice. On a more technical level, this means placing the process descriptor at the end of the runqueue after its timeslice, then running all subsequent tasks until it reaches the end of the queue, at which time it will start the cycle again. FIFO (First In, First Out) scheduling runs each FIFO process of the same priority until it is finished, then runs the next process in the runqueue. It does this in order of when processes were placed in the runqueue. On a technical level, FIFO scheduling behaves almost identically to round-robin scheduling but with infinite timeslices.
+
+\subsection{Windows}
+\tab Windows NT processor scheduling detemines which job is going to load onto
+CPU at the given time. Because first in first out queues is not optimal for
+Windows usually, it classified different processes with priority. Windows NT
+treats same prioty as equal, it assigns time slices to them equally in a
+round-robin fashion. If a higher priority thread becomes avilable to run,
+Windows NT suspend lower priority tasks and start excuting the higherpriority
+one\cite{MSDN}.
+
+There are six named priority levels:
+\begin{itemize}
+    \item Realtime
+    \item High
+    \item Above Normal
+    \item Normal
+    \item Below Normal
+    \item Low
+\end{itemize}
+\tab Applications start at a base priority level of eight. The system dynamically
+adjusts the priority level to give all applications access to the processor.
+
+\section{Processes}
+\subsection{Linux}
+\tab To create a process in Linux, the fork() system call is used. 
+it creates a child process from the currently executing process which is
+referred to as the parent. It is common to initiate a new program after the fork() command. To create a new
+namespace and begin executing a new program in Linux the exec() system call is
+used. If the parent process relies on the child process it can inquire about the
+child's status by using the wait() system call. Child processes when completed
+exit using the exit() system call, however, these processes are not
+completely destroyed from the system quite yet. When a child process calls exit()
+it is put into a "Zombie" state until the parent calls wait() \cite{Love}.
+
+\subsection{Windows}
+\tab In Windows operating system, the main principles of processes are preserved
+with process having their own address spaces. However, Microsoft Windows does it slightly
+different. Windows uses the CreateProcess() system call which functions similar to 
+the Linux fork() implementation. All of the information needed to execute 
+a program is passed in to the CreateProcess() function. Since Windows does 
+not clone the parent process like Linux does the CreateProcess() function 
+requires many more parameters to achieve the same effect but potentially has
+more control of the child process \cite{Wini}. 
+
+\section{Threads}
+\subsection{FreeBSD}
+\tab Kernel threading was not with early version of free BSD. It was until the
+release of FreeBSD 5.0. However, it worked but did not perform well, so from
+version 7.0 onward, FreeBSD started using a 1:1 threading model, called libthr
+libthr which is 1:1 threading \cite{freebsd.org}(2.3.1.5). It is also used for
+1:1 threading library as pthread's thread ID but handling of this is internal to
+the library and cannot be relied on.
+
+
+\bibliographystyle{plain}
+\bibliography{ref}
+\end{document}
