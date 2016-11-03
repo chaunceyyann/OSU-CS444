@@ -29,7 +29,7 @@ static int look_dispatch(struct request_queue *q, int force)
 		rq = list_entry(nd->queue.next, struct request, queuelist);
 		list_del_init(&rq->queuelist);
 		elv_dispatch_sort(q, rq);
-		curSector = blk_rq_pos(rq);
+		currSector = blk_rq_pos(rq);
 		return 1;
 	}
 	printk(KERN_DEBUG "Queue dispatched.\n");

@@ -9,7 +9,7 @@
 #include <linux/init.h>
 
 struct noop_data {
-	struct list_head queue;
+	struct list_head queue;i
 };
 
 static void noop_merged_requests(struct request_queue *q, struct request *rq,
@@ -23,8 +23,10 @@ static int noop_dispatch(struct request_queue *q, int force)
 	struct noop_data *nd = q->elevator->elevator_data;
 
 	if (!list_empty(&nd->queue)) {
-		struct request *rq;
-		rq = list_entry(nd->queue.next, struct request, queuelist);
+		//struct request *rq; 
+		cl = list_entry(nd->queue.next, struct request, queuelist);
+		
+        rq = list_entry(nd->queue.next, struct request, queuelist);
 		list_del_init(&rq->queuelist);
 		elv_dispatch_sort(q, rq);
 		return 1;

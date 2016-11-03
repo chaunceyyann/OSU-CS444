@@ -53,7 +53,7 @@
     \vfill
     \textsc{\LARGE CS 444 Group 15}\par
     \vspace{1cm}
-    { \huge \bfseries Project 2 \par}
+    { \huge \bfseries Project 2 Writeup\par}
     \vfill
     \emph{Member:}\par
     \vspace{.5cm}
@@ -73,38 +73,58 @@
 \end{center}
 \end{titlepage}
 
-\section*{Command log for running the initial kernel}
+\section*{What do you think the main point of this assignment is?}
+
+In this assignment, we need to edit the Linux source code directly. It is a lot to consider and a lot to learn because if we want to change anything, we have to take into consideration of the impact on the whole. First, we need to know how to write and modify the I/O scheduler under this circumstances, then make it to work. We need to think more about the code and understand the mechanism to make it work. So, I think, the main point of this assignment is to get us working with the Linux source code, then know how the LOOK/C\_LOOK I/O scheduler work.
+
+\section*{How did you personally approach the problem? Design decisions, algorithm, etc.}
+
+Personally, we just look at the code and try to understand it first. We have to understand how it works before we try to make changes, which is, implement a scheduler. To understand the various structs took us a bit of time. Then we noticed that the Noop is the default scheduler, so we build our C\_LOOK scheduler based on the Noop. 
+
+\section*{How did you ensure your solution was correct? Testing details, for instance.}
+
+We use printk to print out the debugging information and change our solution according to it.
+
+\section*{What did you learn?}
+
+We learned how to make an I/O scheduler with simple FIFO based algorithm. Also, after go through the Linux source code, we learned quite a bit about how different parts connects.
+
+\section*{The design you plan to use to implement the SSTF algorithms.}
+
+C\_LOOK is a disk scheduling algorithm. It begins to scan from the starting point to the nearest end; after reaching the lowest/highest, it jumps to the other end and moves in the same direction, until it reaches all the element in the queue.
+
 
 \section*{Version control log}
 \begin{tabular}{@{}ccc@{}}
     \toprule
     Date                & Person   & Message                                                   \\ \midrule
-    Sat Oct 08 15:33:33 & Changxu  & Added the solution for concurrency problem 1              \\
-    Fri Oct 07 17:35:21 & Xiaomei  & version 2                                                 \\
-    Fri Oct 07 17:09:30 & Xiaomei  & Concurrency file                                          \\
-    Sun Oct 02 03:27:11 & Changxu  & Cleaned up the dir                                        \\
-    Sun Oct 02 03:16:26 & Changxu  & Updated README.md, some description files                 \\
-    Sat Oct 01 04:10:18 & Changxu  & Added tex file for generating git log graph               \\
-    Sat Oct 01 02:19:02 & Changxu  & Concurrency file                                          \\ \bottomrule
+    Mon Oct 24 22:45:32 & Changxu  & Final Adjustment                                          \\
+    Mon Oct 24 22:31:34 & Xiaomei  & Update Writeup                                            \\
+    Mon Oct 24 20:09:51 & Changyu  & Upload the main file                                      \\
+    Sun Oct 23 01:18:29 & Xiaomei  & Cleanup dir                                               \\
+    Fri Oct 21 16:49:09 & Changxu  & Looed in to noop                                          \\
+    Fri Oct 21 16:23:15 & Xilun    & Added tex file; noop                                      \\
+    Thu Oct 13 20:21:21 & Changxu  & Initial setup, update README.md                           \\ \bottomrule
 \end{tabular}
 
 \section*{Work Log}
 \begin{tabular}{@{}ccc@{}}
     \toprule
     Date                & Person   & Task                                                      \\ \midrule
-    Sat Oct 1           & Changxu  & pthreads                                                  \\
-    Sat Oct 1           & Changxu  & random number generator                                   \\
-    Sun Oct 2           & Xiaomei  & pthreads                                                  \\
-    Wed Oct 5           & Xilun    & Finished pthreads                                         \\
-    Fri Oct 7           & Xiaoemi  & Multiple threads                                          \\
-    Fri Oct 7           & Changxu  & random number generator                                   \\
-    Mon Oct 10          & Xilun    & Finished integrating                                      \\
-    Mon Oct 10          & Xiaomei  & style guide                                               \\
-    Mon Oct 10          & Chnagxu  & style guide                                               \\ \bottomrule
+    Fri Oct 14          & Changxu  & Locate/find noop-iosched.c                                \\
+    Fri Oct 14          & Xilun    & Read and analyze the structure in noop-iosched.c          \\
+    Fri Oct 14          & Xiaomei  & Prepare the writeup tex file                              \\
+    Fri Oct 21          & Xilun    & Learned how to perform C-LOOK disk scheduling algorithm   \\
+    Fri Oct 21          & Xiaoemi  & Learned how to perform C-LOOK disk schefuling algorithm   \\
+    Fri Oct 21          & Changxu  & Modify noop-iosched.c to fit C-LOOK algorithm             \\
+    Mon Oct 24          & Xilun    & Debugging                                                 \\
+    Mon Oct 24          & Xiaomei  & Debugging                                                 \\
+    Mon Oct 24          & Xiaomei  & Finish the writeup                                        \\
+    Mon Oct 24          & Chnagxu  & Debugging                                                 \\ \bottomrule
 \end{tabular}
 
 \newpage
 \section*{Appendix 1: Look elevator code}
-\input{__look-ioshed.c.tex}
+\input{__look-iosched.c.tex}
 
 \end{document}
