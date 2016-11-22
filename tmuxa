@@ -1,2 +1,16 @@
 #!/bin/sh
-tmux -S /tmp/cs444-015 attach
+echo $1
+case $1 in
+    'yanc')
+        tmux -S /tmp/cs444-015 attach -t yanc
+        ;;
+    'guox')
+        tmux -S /tmp/cs444-015 attach -t guox
+        ;;
+    'wangx2')
+        tmux -S /tmp/cs444-015 attach -t wangx2
+        ;;
+    *)
+        tmux -S /tmp/cs444-015 attach -t 0
+        ;;
+esac

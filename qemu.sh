@@ -15,7 +15,7 @@ case $SHELL in
 
     *) echo "No shell supported";;
 esac
-if [[ -n $1 ]];then
+if [ -n $1 ];then
     kernel_path=$1
 else
     kernel_path=linux-yocto-3.14/arch/x86/boot/bzImage
@@ -26,4 +26,4 @@ fi
 # Options:
 # Network pass through: Default - without any -net option - is Pass-through.
 # Virtio: 
-qemu-system-i386 -gdb tcp::5515 -S -nographic -kernel $kernel_path -drive file=core-image-lsb-sdk-qemux86.ext3,if=ide -enable-kvm -net none -usb -localtime --no-reboot --append "root=/dev/hda rw console=ttyS0 debug"
+qemu-system-i386 -gdb tcp::5515 -S -nographic -kernel $kernel_path -drive file=core-image-lsb-sdk-qemux86.ext3,if=ide -enable-kvm -usb -localtime --no-reboot --append "root=/dev/hda rw console=ttyS0 debug"

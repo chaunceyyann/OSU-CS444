@@ -74,6 +74,7 @@ unsigned long rdn_int()
 
 void print_table()
 {
+        printf("---------------------------------------------------\n");
         pthread_mutex_lock(&mutex_sum);
         int i;
         printf("***************************************************\n");
@@ -94,6 +95,11 @@ void print_table()
         printf("\n");
         printf("***************************************************\n");
         pthread_mutex_unlock(&mutex_sum);
+        printf("---------------------------------------------------\n");
+    
+        for (i=0;i<3;i++)
+            printf("\n");
+        
 }
 
 
@@ -170,11 +176,11 @@ void * dinersProblem(int *a)
 int main()
 {
         pthread_t *threads;
-        int v1 = 1;
-        int v2 = 2;
-        int v3 = 3;
-        int v4 = 4;
-        int v5 = 5;
+        int v1 = 0;
+        int v2 = 1;
+        int v3 = 2;
+        int v4 = 3;
+        int v5 = 4;
 
         threads = (pthread_t *) malloc(5 * sizeof(pthread_t));
         pthread_mutex_init(&mutex_sum, NULL);

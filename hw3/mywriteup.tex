@@ -1,0 +1,129 @@
+\documentclass[letterpaper,10pt,titlepage]{article}
+
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+
+\usepackage{alltt}
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+\usepackage{minted}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+
+\usepackage{hyperref}
+
+\newcommand{\ignore}[2]{\hspace{0in}#2} %Used for inline comments
+\newcommand{\tab}{\hspace*{2em}} %For tabbing
+
+\geometry{textheight=10in, textwidth=7.5in}
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+
+\usepackage{hyperref}
+
+
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+\parindent = 0.0 in
+\parskip = 0.2 in
+
+%Used for code snippets
+\usepackage{listings}
+\lstset{ %
+	language=C,                % choose the language of the code
+	basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+	numbers=left,                   % where to put the line-numbers
+	numberstyle=\footnotesize,      % the size of the fonts that are used for the line-numbers
+	stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
+	numbersep=5pt,                  % how far the line-numbers are from the code
+	backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+	showspaces=false,               % show spaces adding particular underscores
+	showstringspaces=false,         % underline spaces within strings
+	showtabs=false,                 % show tabs within strings adding particular underscores
+	frame=single,           % adds a frame around the code
+	tabsize=4,          % sets default tabsize to 2 spaces
+	captionpos=b,           % sets the caption-position to bottom
+	breaklines=true,        % sets automatic line breaking
+	breakatwhitespace=false,    % sets if automatic breaks should only happen at whitespace
+	escapeinside={\%*}{*)}          % if you want to add a comment within your code
+}
+
+\def\name{Chauncey Yan}
+\def\project{Project 3}
+\def\date{11/14, 2016}
+
+%% The following metadata will show up in the PDF properties
+\hypersetup{
+  colorlinks = true,
+  urlcolor = black,
+  pdfauthor = {\name},
+  pdfkeywords = {cs411 ``operating systems''},
+  pdftitle = {CS 411 \project},
+  pdfsubject = {CS 411 \project},
+  pdfpagemode = UseNone
+}
+
+\parindent = 0.0 in
+\parskip = 0.2 in
+
+\begin{document}
+\name
+
+CS 411
+
+\date
+
+\begin{center}
+{\LARGE Individual Writeup for \project}
+\end{center}
+
+\begin{enumerate} 
+\item \emph{What do you think the main point of this assignment is?}
+The main points of this assignment were to learn about the Linux crypto API, writing device drivers, and the way memory works in Linux. From my understanding, the final project is to write a device driver for a USB Nerf dart gun, so learning how to write a device driver will be very helpful for this.
+
+\item \emph{How did you approach the problem? Design decisions, algorithm, etc.}
+
+\tab \textbf{Background:} 
+\tab Linux is a virtual memory operating system. This means that it abstracts the memory available to each process into a contiguous address space. The kernel manages virtual address spaces and the assignment of real memory to virtual memory. The CPU automatically translates virtual addresses to physical addresses using the Memory Management Unit (MMU)\ignore{source:http://en.wikipedia.org/wiki/Virtual_memory}. On a more specific level, memory in Linux is divided into pages. The kernel treats these pages as the basic unit of memory management\ignore{source:Love pg. 231}. Every physical page is represented by a struct page. Linux uses a page table to keep track of the mapping between virtual and physical memory addresses. There are 3 levels of Linux page tables. The top level is the page global directory. The second level is the page middle directory. The third level is the page table. Important kernel functions for working with memory are kmalloc(), vmalloc(), vfree(), and memset(). The kmalloc(size, flags) function returns physically contiguous memory. vmalloc() allocates virtually contigous memory. Memory allocated with vmalloc() is freed by vfree(void *addr). memset(void *s, int c, size\_t n) fills the first n bytes of the memory area pointed to by s with the constant byte c.\ignore{source: http://linux.die.net/man/3/memset}
+
+\tab A block driver provides access to devices that transfer randomly accessible data in fixed-size blocks—disk drives, primarily. The first step taken by most block drivers is to register themselves with the kernel. The function for this task is register\_blkdev (which is declared in <linux/fs.h>). The block driver request method has the following prototype: void request(request_queue_t *queue). This function is called whenever the kernel believes it is time for your driver to process some reads, writes, or other operations on the device\ignore{source: http://lwn.net/images/pdf/LDD3/ch16.pdf}. 
+
+\tab Drivers allow the kernel to interact with hardware. Modules are the mechanism by which the Linux kernel can load and unload object code on demand. Writing modules is very similar to writing a new application, rather than development on the core subsystems of the kernel. This is because modules live in their own files and have predefined entry and exit points. To initialize a module, place a module\_init function at the end of the module file. This ``function" is actually a macro that assigns the initialization function of the module. All of these init functions must have the form ``int my_init(void)" and return 0 on success. Typically, these initialization functions register resources, initialize hardware, allocate data structures, etc. Module\_exit() is a macro that defines a module's exit point. The exit point is invoked when the kernel removes a module from memory. In similar fashion to module\_init(), this macro accepts the exit function of the module. Typically, exit functions free resources, shutdown and reset hardware, and perform other cleanup before returning. Essentially, they undo whatever the module\_init() function did\ignore{source: Love, pg 339}. 
+
+\tab Block drivers are a special kind of driver that allow the kernel to interact with block devices. In our case, we needed our driver to instantiate a virtual block device in memory and encrypt data to and from it. Block devices make their operations available to the system by way of the block_device_operations structure. The first step taken by most block drivers is to register themselves with the kernel. The function for this task is register_blkdev. The corresponding function for canceling a block driver registration is unregister_blkdev. To make the disk available to the system, you must initialize the structure and call add\_disk(). Struct gendisk is the kernel's representation of an individual disk device. In gendisk, major, first\_minor, minors, disk\_name, block\_device\_operations, request\_queue, flags, capacity, and private\_data must be initialized\ignore{source: http://www.makelinux.net/ldd3/chp-16-sect-1}. The major number is A number indicating which device driver should be used to access a particular device. The minor number is A number serving as a flag to a device driver\ignore{source: http://www.linux-tutorial.info/modules.php?name=MContent&obj=glossary}. 
+
+\tab To compile the module, you must edit the Kconfig file. A line needs to be added stating ``config MODULE_NAME," followed by ``tristate <description>." This line is followed by ``default <option>." Option can be one of three states: ``y" if this module should be compiled into the kernel, ``n" if it should not be compiled into the kernel, and ``M" if it should be compiled as a module. You also must edit the Makefile in the directory in which the module is located. Simply add a line that states ``obj-\$(CONFIG_MODULE_NAME) += module.o" where ``module.o" should be of the same name as your ``module.c" file.
+
+\tab Once a module is compiled, it still needs to be loaded. This can be done with the insmod module.ko command, where module.ko is the name of the desired module. Similarly, rmmod module.ko is used to remove a module. The modules are located in the /lib/modules/<kernel-version>/kernel/drivers directory. To see what modules have been loaded, one can check sysfs. Sysfs is a virtual filesystem mounted under /sys that provides access to the hierarchy of kernel objects (drivers) that have been loaded.
+
+\tab We were asked to make use of the Linux Crypto API for this project to encrypt data being written to our RAM disk and decrypt the data coming from it. The functions for this API are stored in the linux/crypto.h header. This is a complex API, but the way that it works is you first instantiate a crypto_cipher struct globally. This should be performed in the initialization function for the driver. The first thing to do is to define the cryptographic algorithm using the crypto\_alloc\_cipher() function. This function accepts a string for the algorithm name as the first parameter. Common crypto algorithms supported by Linux are AES and DES. When choosing an algorithm, it is critical to ensure that the block size of your RAM disk is divisible by the block size of the encryption algorithm you select. We chose AES, which is a symmetric-key algorithm. This means that it uses the same cryptographic key for both encryption and decryption. The crypto\_cipher struct holds several parameters, including the key. The key is the string that is used to encrypt and decrypt the data. The crypto\_cipher struct also holds the cryptographic algorithm being used. To write encrypted data to disk, use the crypto\_cipher\_encrypt\_one() function. This accepts a crypto_cipher struct, a destination address, and the buffer containing the data to be written as its arguments. To read encrypted data from disk, use the crypto\_cipher\_decrypt\_one() function. This accepts a crypto_cipher struct, a source address, and the buffer with the data to be read as its arguments. On exiting the module, the crypto_cipher struct should be cleared from memory. This can be done with the crypto\_free\_cipher() function, which accepts a crypto\_cipher struct as its only argument. 
+
+\tab \textbf{Design/Code/Algorithm:} 
+\tab We followed McGrath's instructions from the previous semester for our design. These instructions can be found at http://web.engr.oregonstate.edu/cgi-bin/cgiwrap/dmcgrath/classes/12S/cs411/index.cgi?file=project4. We found the sbull driver online at http://hi.baidu.com/casualfish/item/7931bbb58925fb951846977d. We made some modifications to this driver based on our needs. The first modifications we made were to replace all instances of ``sbull" with ``osurd." We also named our file ``osurd.c." These were primarily cosmetic changes to distinguish our driver. The original sbull driver included operations for release, open, and media_changed. We didn't need these because they are designed for removable media, but we left them in anyway. 
+
+\tab We took an iterative approach to development. We first set out to get our driver working without encryption. We made a couple of updates to the sbull driver to modernize it for the 3.0.4 kernel we were using (it was originally written for 2.6 and a few functions were deprecated). We replaced all instances of the deprecated ``if(!blk\_fs\_request(req))" with ``if (req->cmd_type != REQ\_TYPE\_FS)." We added a getgeo() function as per McGrath's instructions. According to these instructions, in newer kernels, including the one that we are developing on, the block layer intercepts the HDIO GETGEO ioctl command and calls a getgeo() method that each block driver must implement. We copied over the geometry detecting code from the ioctl function and then deleted that function as it was no longer useful or necessary. We changed the block_device_operations struct to reflect this change by removing ``.ioctl = osurd\_ioctl" and replacing it with ``.getgeo = osurd\_getgeo." We then tested unencrypted I/O (details below in the ``Testing" section) with this driver and proceeded to implement crypto once that was in place.
+
+\tab To implement the cryptography, we made a few changes to our OSURD driver. We added global variables for the key and crypto\_cipher struct. We added a module\_param for the key so this value could be passed by the user at runtime/initialization. We modified three functions: osurd\_exit(), osurd\_init(), and osurd\_transfer(). In osurd\_exit(), we simply added ``crypto\_free\_cipher(tfm)" to free the memory holding our cipher struct. In osurd\_init(), we initialized our cipher struct to use AES encryption with the aforementioned crypto\_alloc\_cipher() function. We added a couple lines of error-checking code to ensure this initialization succeeded. The osurd\_transfer() function is where we made the most crypto-related changes. We first set the crypto cipher to use our key with the ``crypto\_cipher\_setkey()" function. We then added some logic to distinguish between reads and writes. If the transfer request was for a write, we wanted to be encrypting the data. We used ``crypto\_cipher\_encrypt\_one" to encrypt and write the data from the buffer to the RAM disk. In the case of reading, we wanted to be decrypting the data. We used ``crypto\_cipher\_decrypt\_one" to decrypt the data and read it into the buffer. 
+
+\item \emph{How did you ensure your solution was correct? Testing details, for instance.}
+
+\tab As noted earlier, we developed our solution iteratively. When we were finished with writing the code to get unencrypted I/O implemented, we tested it. We did this by inserting the module with ``sudo insmod /lib/modules/3.0.4/kernel/drivers/block/osurd.ko." This created four block devices under /dev: osurdaa, osurdab, osurdac, and osurdad. We then tested partitioning with ``sudo cfdisk osurda." In cfdisk, we simply created a partition with the default size and wrote this partition table to the RAM disk. This created a fifth block device in /dev, osurda1. We then formatted the partition using ``sudo mkfs.ext2 /dev/osurda1." We created a directory, /mnt/osurda, and mounted this device there. We then edited a text file in this directory, saved it, and used ``cat <textfile>" to ensure that we could read from it. Once all of these steps had been completed, we were convinced our driver was functioning properly and proceeded to write the crypto code.
+
+\tab We based our crypto tests on the (admittedly obvious) assumption that data before encryption would be different from data after encryption. We found some code online that demonstrated the crypto API. This code had a hexdump() function that would convert bytes of data to hexadecimal and kprint() them. We realized we could use this function to test our crypto write code by hexdumping the data in the buffer prior to encryption, and then hexdumping the data that had actually been written to the disk. If these two values were different, we would know that the encryption had worked. The same approach could be taken to testing our crypto read code by hexdumping the data before and after decryption. We added this functionality to our code, went through the steps that we had done earlier to test partitioning/reading/writing the disk, and then checked dmesg. Sure enough, the data was different. So we knew our crypto was working.
+
+\item \emph{What did you learn?}
+I learned that symmetric-key cryptography uses the same key to encrypt and decrypt data. I learned how to partition and format a filesystem in Linux. I gained a better understanding of how memory allocation works in the kernel. I learned how to compile drivers as modules. I learned how to pass parameters to drivers at initialization time. I learned how to remove modules. I learned that I like writing drivers and modules much more than schedulers because they're easier to debug and compile a lot faster.
+
+\end{enumerate}
+
+\end{document}
