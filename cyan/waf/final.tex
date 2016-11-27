@@ -1,0 +1,363 @@
+%\documentclass[letterpaper,10pt]{article}
+\documentclass[10pt,draftclsnofoot,onecolumn,journal,compsoc]{IEEEtran}
+
+\usepackage{graphicx}                                        
+\usepackage{amssymb}                                         
+\usepackage{amsmath}                                         
+\usepackage{amsthm}                                          
+
+\usepackage{alltt}                                           
+\usepackage{float}
+\usepackage{color}
+\usepackage{url}
+
+\usepackage{balance}
+\usepackage[TABBOTCAP, tight]{subfigure}
+\usepackage{enumitem}
+\usepackage{pstricks, pst-node}
+
+\usepackage{geometry}
+\geometry{textheight=8.5in, textwidth=6in}
+\usepackage{booktabs}
+
+%random comment
+
+\newcommand{\cred}[1]{{\color{red}#1}}
+\newcommand{\cblue}[1]{{\color{blue}#1}}
+\newcommand{\tab}{\hspace*{2em}} % for tabbing
+\newcommand{\toc}{\tableofcontents}
+\newcommand\codeHighlight[1]{\textcolor[rgb]{1,0,0}{\textbf{#1}}}
+
+\usepackage{hyperref}
+\usepackage{latexsym}
+\usepackage{fontenc}
+\usepackage{lettrine}
+\usepackage{soul}
+
+\def\name{Changxu Yan}
+
+%% The following metadata will show up in the PDF properties
+\hypersetup{
+  colorlinks = true,
+  urlcolor = black,
+  pdfauthor = {\name},
+  pdfkeywords = {CS444 Final},
+  pdftitle = {CS444 Final},
+  pdfsubject = {CS444 Final},
+  pdfpagemode = UseNone
+}
+%pull in the necessary preamble matter for pygments output
+\input{pygments.tex}
+
+\parindent = 0.0 in
+\parskip = 0.1 in
+
+\begin{document}
+\begin{titlepage}
+\begin{center}
+    \vfill
+    \textsc{\LARGE CS 444 Group 15}\par
+    \vspace{1cm}
+    { \huge \bfseries Writing assignment 2 \par}
+    \vfill
+    \emph{Writer:}\par
+    Changxu \textsc{YAN}\par
+    \vspace{1cm}
+    931-927-069 \par
+    \vfill
+    {\large \today\par}
+\end{center}
+\end{titlepage}
+
+\noindent\rule{15.5cm}{0.4pt}
+\\
+I, \name, hereby state this is my own work, with no help given or received.\\
+\noindent\rule{15.5cm}{0.4pt}
+\par
+\lettrine{To}{compare these two APIs,} we need to understand what they are. For POSIX, there are a bunch of standards for "UnixLike" APIs, all called POSIX followed by some obscure serial number. Windows API is Microsoft's core set of application programming interfaces (APIs) available in the Microsoft Windows operating systems. POSIX support more "UnixLike" Operating systems, such as linux, ubontu and MacOS, it has better portablity compare to WIN32 API. These two interfaces has lots of differences and similarities. In here, I will talk about File I/O, signal handling and processes.\cite{Love} \par
+\section*{File I/O}
+Both POSIX and Windows API are using the universal I/O model. All system calls for performing I/O refer to open files using a file descriptor, a (usually small) nonnegative integer. You can find file descriptor for all types of files: pipe, FIFOs, sockets, terminals, devices, and regular files.\par
+In POSIX API, we open and create a file descriptor using
+\begin{Verbatim}[commandchars=\\\{\}]
+\codeHighlight{file\_descriptor = open(path,flags,mode);}
+\end{Verbatim}
+returning a -1 means an error occurred and errno is set appropriately. The most common flags I use are O\_RDONLY, O\_WRONLY, O\_RDWR, and O\_CREAT, O\_APPEND. Using O\_CREAT flags will give you the option that if there is not a file exist in that name, it will create new one with the mode permission, such as S\_IRWXU for user has read write and execute permission. Using O\_APPEND is equivalent to use 
+\begin{Verbatim}[commandchars=\\\{\}]
+\codeHighlight{lseek(int fd, off\_t offset, int SEEK\_END)}
+\end{Verbatim}
+to position offset at the end of the file. 
+\begin{Verbatim}[commandchars=\\\{\}]
+\codeHighlight{num\_read = read(fd, buffer, count)}
+\end{Verbatim}
+This function reads from the open file referred to by fd then put the content in the buffer. it returns the number of how many 8 bits it reads.
+\begin{Verbatim}[commandchars=\\\{\}]
+\codeHighlight{num\_written = write(fd, buffer, count)}
+\end{Verbatim} 
+is kind of similar to read, but writes from buffer to the open file referred to by fd. It returns the number of how many 8bits it written. The way to close a file is fairly straight forward, just 
+\begin{Verbatim}[commandchars=\\\{\}]
+\codeHighlight{close(file\_descriptor);}
+\end{Verbatim}
+\par
+Below is the file copy tool in C using POSIX API.\\
+\noindent\rule{15.5cm}{0.4pt}
+\begin{verbatim}
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#define FILEPATH1 "file.txt"
+#define FILEPATH2 "file_copy.txt"
+#define BUF_SIZE 1024
+int main(int argc, char *argv[]){
+    int fdread, fdwrite;
+    char buf[BUF_SIZE];
+    ssize_t num_read;
+    
+    if ((fdread = open(FILEPATH1, O_RDONLY)) == -1){
+        printf("Failed to open file %s", FILEPATH1);
+        exit(EXIT_FAILURE);
+    }
+    
+    if ((num_read = read(fdread, buf, BUF_SIZE)) == -1){
+        perror("Read: ");
+        exit(EXIT_FAILURE);
+    }
+    buf[num_read] = '\0';
+    
+    if ((fdwrite = open(FILEPATH2, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR)) == -1){
+        printf("Failed to open file %s", FILEPATH2);
+        exit(EXIT_FAILURE);
+    }
+    
+    if ((write(fdwrite, buf, strlen(buf))) == -1){
+        perror("Write: ");
+        exit(EXIT_FAILURE);
+    }
+    
+    return 0;
+}
+\end{verbatim}
+\noindent\rule{15.5cm}{0.4pt}
+In WIN API, the way to copy a file has lots of simalarity as POSIX API. \par
+\noindent\rule{15.5cm}{0.4pt}
+
+
+\begin{verbatim}
+#include <windows.h>
+#include <tchar.h>
+#include <stdio.h>
+#include <strsafe.h>
+
+#define BUFFERSIZE 81
+
+void __cdecl _tmain(int argc, TCHAR *argv[])
+{
+    HANDLE rFile, wFile; 
+    DWORD dwBytesRead = 0;
+	DWORD dwBytesWritten = 0;
+    char ReadBuffer[BUFFERSIZE] = {0};
+	DWORD dwBytesToWrite = (DWORD)strlen(ReadBuffer);
+	
+	hFile = CreateFile(argv[1],              // file to open
+                      GENERIC_READ,          // open for reading
+                      FILE_SHARE_READ,       // share for reading
+                      NULL,                  // default security
+                      OPEN_EXISTING,         // existing file only
+                      FILE_ATTRIBUTE_NORMAL, // normal file
+                      NULL);                 // no attr. template
+
+   if (rFile == INVALID_HANDLE_VALUE) 
+   { 
+       DisplayError(TEXT("CreateFile"));
+       _tprintf(TEXT("Terminal failure: unable to open file \"%s\" for read.\n"), argv[1]);
+       return; 
+   }
+
+   // Read one character less than the buffer size to save room for
+   // the terminating NULL character. 
+
+   if( FALSE == ReadFile(rFile, ReadBuffer, BUFFERSIZE-1, &dwBytesRead, NULL) )
+   {
+       DisplayError(TEXT("ReadFile"));
+       printf("Terminal failure: Unable to read from file.\n");
+       CloseHandle(hFile);
+       return;
+   }
+   
+   // write to another file
+   wFile = CreateFile(argv[1],                // name of the write
+                         GENERIC_WRITE,          // open for writing
+                         0,                      // do not share
+                         NULL,                   // default security
+                         CREATE_NEW,             // create new file only
+                         FILE_ATTRIBUTE_NORMAL,  // normal file
+                         NULL);                  // no attr. template
+
+      if (wFile == INVALID_HANDLE_VALUE) 
+      { 
+          DisplayError(TEXT("CreateFile"));
+          _tprintf(TEXT("Terminal failure: Unable to open file \"%s\" for write.\n"), argv[1]);
+          return;
+      }
+
+      _tprintf(TEXT("Writing %d bytes to %s.\n"), dwBytesToWrite, argv[1]);
+
+      bErrorFlag = WriteFile( 
+                      wFile,           // open file handle
+                      ReadBuffer,      // start of data to write
+                      dwBytesToWrite,  // number of bytes to write
+                      &dwBytesWritten, // number of bytes that were written
+                      NULL);            // no overlapped structure
+
+      if (FALSE == bErrorFlag)
+      {
+          DisplayError(TEXT("WriteFile"));
+          printf("Terminal failure: Unable to write to file.\n");
+      }
+   CloseHandle(rFile);
+   CloseHandle(wFile);
+}
+   
+\end{verbatim}
+\noindent\rule{15.5cm}{0.4pt}
+In WIN API, the way to create a file is very different. A struct like HANDLE must be used to create a file. \par
+\begin{verbatim}
+HANDLE WINAPI CreateFile(
+  _In_      LPCTSTR lpFileName,
+  _In_      DWORD dwDesiredAccess,
+  _In_      DWORD dwShareMode,
+  _In_opt_  LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+  _In_      DWORD dwCreationDisposition,
+  _In_      DWORD dwFlagsAndAttributes,
+  _In_opt_  HANDLE hTemplateFile
+);
+\end{verbatim}
+lpFileName is a characters array to store the path and name of the file which is the same as POSIX API.\par
+"dwShareMode [in] The requested sharing mode of the file or device, which can be read, write, both, delete, all of these, or none (refer to the following table). Access requests to attributes or extended attributes are not affected by this flag." This sharing mode setting is not the mode in the POSIX API mode setting. To set different mode, you will using the 4 bytes address like 0x00000000 and 0x00000001 to achieve that.\par
+"If the function succeeds, the return value is an open handle to the specified file, device, named pipe, or mail slot. If the function fails, the return value is INVALID\_HANDLE\_VALUE. To get extended error information, call GetLastError."\par
+\par
+\section*{Signal Handling}
+A signal is a software interrupt delivered to a process. In POSIX API, the way we fulfill signal handling is by \hl{sigaction(int sig, struct sigaction *act, struct sigaction *oact)}. before we can actually catch a signal, we need including <signal.h> and create \hl{extern void psignal(int sig, const char *msg)}. The most familier signal to me are the signal using in projects.\par
+SIGHUP report that user's terminal is disconnected. SIGINT: program interrupt. (ctrl-c).SIGQUIT terminate process and generate core dump.\\
+\noindent\rule{15.5cm}{0.4pt}\\
+\begin{verbatim}
+#include <signal.h>
+static void handler(int signum){
+    /* Take appropriate actions for signal delivery */ 
+    psignal(signal, "Caught it"); 
+} 
+int main(){ 
+    struct sigaction sa; 
+	 
+    sa.sa_handler = handler; 
+    sigemptyset(&sa.sa_mask); 
+    /* Restart functions if interrupted by handler */ 
+    sa.sa_flags = SA_RESTART;  
+	 
+    if (sigaction(SIGINT, &sa, NULL) == -1) 
+    /* Handle error */; 
+    /* Further code */; 
+} 
+\end{verbatim}
+In Win API, the signal handling is pretty simlar to POSIX. You have a int signal value, and a funtion to be excuted.\par
+\begin{verbatim}
+void (__cdecl *signal(
+   int sig, 
+   void ((__cdecl *func ) (int [, int ] ))) 
+   (int));
+Return Value:
+\end{verbatim}
+\noindent\rule{15.5cm}{0.4pt}\\
+Win API signal returns the previous value of func that's associated with the given signal. According the example in Microsoft website, if the previous value of func was SIG\_IGN, the return value is also SIG\_IGN. A return value of SIG\_ERR indicates an error; in that case, errno is set to EINVAL.\par
+\section*{processes}
+
+Process is an instance of a computer program that is being executed. It contains the program code and its current activities. Each process has a unique id call pid, when you want to do something with the particular process, you can always refer to the pid. In POSIX API, we used forking to create a new process. \hl{fork()} returns interesting things, it will return 0 for child case, -1 for error as usual, child process id to parent process. Thus, we can use a switch to forking different processes. Child has a unique process ID and its own copy of the parent's descriptors. When we using forking, we have to make sure the parent process get killed after child process, otherwise, the child process will be in the middle of nowhere then become a zombie process.\par
+\noindent\rule{15.5cm}{0.4pt}
+\\
+\begin{verbatim}
+pid_t child; 
+int status; 
+	 
+switch ((child = fork())){ 
+    case 0: 
+    //this is the child case 
+        printf("I am a child, my process ID is %d (%d)\n", getpid(), getppid()); 
+        execlp("ps", "-t", "-l", (char*)NULL); 
+        break; 
+    case -1: 
+    //this is the error case 
+        perror("Could not create child"); 
+        exit(-1); 
+    default: 
+    //this is the parent case 
+        printf("I am the parent, my process ID is %d\n", getpid()); 
+        wait(&status); 
+        printf("Waited on child %d\n", child); 
+    break; 
+} 
+\end{verbatim}
+\noindent\rule{15.5cm}{0.4pt}\\
+
+Creating child processes is a foreign concept to Windows API. However, there are several Windows functions that emulate the forking process in POSIX API. This is not meaning that Windows API does not support multiple processes; it just works in a different way. The CreateProcess function in Windows is the equivalent of using fork(), execl() and system() respectively in UNIX. There are Windows equivalent for exit(), getpid(), wait() and kill() in UNIX.\par
+The way creating child processes in Windows is different from POSIX API. Windows treats things more as objects rather than files and is evident in some of the Windows functions for process man- agement. The process handlers for Windows are WaitForMultipleObjects and WaitForSingleObject, which is like calling waitpid() or wait() in UNIX, but notice the names of these functions. They are focused around objects and not "children" like in UNIX. The biggest difference between multiple processes in Windows and UNIX has to be the concept of the parent and child. Because of this, there are no Windows equivalents for the exec() functions and its variants. \par
+In WINAPI, when you creating a new process, the new process runs independently from the creating process, usually refer to parent- child relationship which is same as POSIX processing.\par
+\noindent\rule{15.5cm}{0.4pt}\\
+\begin{verbatim}
+#include <windows.h>
+#include <stdio.h>
+#include <tchar.h>
+void _tmain( int argc, TCHAR *argv[] ){
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory( &si, sizeof(si) );
+    si.cb = sizeof(si);
+    ZeroMemory( &pi, sizeof(pi) );
+
+    if( argc != 2 ){
+        printf("Usage: %s [cmdline]\n", argv[0]);
+        return;
+    }
+
+    // Start the child process. 
+    if( !CreateProcess( NULL,   // No module name (use command line)
+        argv[1],        // Command line
+        NULL,           // Process handle not inheritable
+        NULL,           // Thread handle not inheritable
+        FALSE,          // Set handle inheritance to FALSE
+        0,              // No creation flags
+        NULL,           // Use parent's environment block
+        NULL,           // Use parent's starting directory 
+        &si,            // Pointer to STARTUPINFO structure
+        &pi )           // Pointer to PROCESS_INFORMATION structure
+    ) {
+        printf( "CreateProcess failed (%d).\n", GetLastError() );
+        return;
+    }
+
+    // Wait until child process exits.
+    WaitForSingleObject( pi.hProcess, INFINITE );
+
+    // Close process and thread handles. 
+    CloseHandle( pi.hProcess );
+    CloseHandle( pi.hThread );
+}
+\end{verbatim}
+\noindent\rule{15.5cm}{0.4pt}\\
+If CreateProcess succeeds, it returns a PROCESS\_INFORMATION structure containing handles and identifiers for the new process and its primary thread. You also need a wait function to wait on child process to stop before parent process. The thread and process handles are created with full access rights, although access can be restricted if you specify security descriptors. When you no longer need these handles, close them by using the CloseHandle function.\par
+\par
+Reference:\par
+http://msdn.microsoft.com/en-us/library/xdkz3x12.aspx\par
+http://msdn.microsoft.com/en-us/library/windows/desktop/ms682512(v=vs.85).aspx\par
+http://scott.sherrillmix.com/blog/category/programmer/latex/\par
+http://msdn.microsoft.com/en-us/library/windows/desktop/bb540534(v=vs.85).aspx
+\newpage
+\bibliographystyle{IEEEtran}
+\bibliography{ref}
+\newpage
+\input{__eg1.c.tex}
+\end{document}
