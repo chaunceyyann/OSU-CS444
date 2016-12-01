@@ -101,7 +101,6 @@ static void hexdump(unsigned char *buf, unsigned int len)
 {
 	while (len--)
 		printk("%02x", *buf++);
-
 	printk("\n");
 }
 

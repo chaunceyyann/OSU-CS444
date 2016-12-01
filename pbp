@@ -1,5 +1,5 @@
 #!/bin/sh
-~/git/pushbullet-bash/pushbullet push all $@
-~/git/pushbullet-bash/pushbullet push jackykwok95@gmail.com $@
-~/git/pushbullet-bash/pushbullet push xiaomeivong@gmail.com $@
+~/git/pushbullet-bash/pushbullet push all file $@
+~/git/pushbullet-bash/pushbullet push jackykwok95@gmail.com file $@
+~/git/pushbullet-bash/pushbullet push xiaomeivong@gmail.com file $@
 
