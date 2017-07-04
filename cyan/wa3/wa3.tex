@@ -1,4 +1,3 @@
-%\documentclass[letterpaper,10pt]{article}
 \documentclass[10pt,draftclsnofoot,onecolumn,journal,compsoc]{IEEEtran}
 
 \usepackage{graphicx}                                        
@@ -19,6 +18,12 @@
 \usepackage{geometry}
 \geometry{textheight=8.5in, textwidth=6in}
 \usepackage{booktabs}
+\usepackage{listings}
+\usepackage{textcomp}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
+\usepackage{natbib}
+\usepackage{indentfirst}
 
 %random comment
 
@@ -40,91 +45,53 @@
 
 \begin{document}
 \begin{titlepage}
-\begin{center}
-    \vfill
-    \textsc{\LARGE CS 444 Group 15}\par
-    \vspace{1cm}
-    { \huge \bfseries Writing assignment 2 \par}
-    \vfill
-    \emph{Writer:}\par
-    Changxu \textsc{YAN}\par
-    \vfill
-    {\large \today\par}
-\end{center}
+    \begin{center}
+        \vfill
+        \textsc{\LARGE CS 444 Group 15}\par
+        \vspace{1cm}
+        { \huge \bfseries Writing assignment 3 \par}
+        \vfill
+        \emph{Writer:}\par
+        Changxu \textsc{YAN}\par
+        \vfill
+        {\large \today\par}
+    \end{center}
 \end{titlepage}
 
-%I want you to look at I/O, both block and character, and provided functionality such as data structures, algorithms, and cryptography. For I/O, specifically examine the different types of devices, I/O scheduling, and the like. Examine how Windows and FreeBSD implements them, and compare each to Linux. Specifically, how do they differ? How are they the same? Why do you think these similarities or differences exist?
 
-\section*{Block I/O}
-\tab Overview: Block I/O devices are used by random access with same size blocks of data. Each small unit on a block device is called sector. All device I/O will be done in units of sectors, which are then allocate to blocks in memory \cite{Love}(pg. 289-290).
+\section{File Systems}
+File systems are an integral part of any operating system. They allow users to upload and store files, provide access to data, and make hard drives useful. Different operating systems differ in their native file system. Modern Linux uses ext4, Windows uses NTFS, last but not least, FreeBSD uses ZFS. File systems are the fundamental principle behind how data is transferred in I/O situations. Every file store in a computer is stored and retrieved via a file system. Without a file system all of the data on the disk would be a pile of bytes unknowing where one file ends and another begins. For each file system there needs to be a way for the data structures to be written and read from the physical volume. This is where the file system drivers come in. Microsoft Windows has a very different way of approaching file systems than the Linux implementation. FreeBSD using \textit{ZFS} as their native file system which have been consider "next-gen file system" by folks. Linux, Windows and FreeBSD have the similar architecture but the way they are implemented with in the operating systems are very different.
 
-\tab The sub-system performes these I/O operations is the block I/O scheduler. Block devices use request queues for keep their pending I/O requests \cite{Love}(pg. 297). The I/O scheduler functions by managing this request queue, deciding the order of requests in the queue and when to dispatch each request to the block device. Seek time is the amount of time required to position the hard disk's head at the location of a specific block. One of the primary optimizations that can be made to block I/O performance is minimizing seek time. I/O schedulers sometimes do this by merging and sorting the requests in the queue. The entire request queue is kept sorted sectorwise so that all seeking along the queue moves sequentially \cite{Love}(pg. 298-299). 
+\subsection*{Linux} 
+Linux supports dozens of different file systems with the most common being Minux, Ext[2,3,4] and JFS. Linux has one of the most versatile file system support all because of the \textit{VFS} (Virtual File System). The \textit{VFS} creates the abstraction from real underlying file I/O operations. With all of the I/O operations flowing through the \textit{VFS} for Linux to support different file system all that is needed is a driver to translates standardized \textit{VFS} data operations to the current file system operations. This allows the Linux system to perform I/O operations without even needing to know what the actual file system of the disk is.~\cite{Love}.
 
-\subsection*{Provided Functionality}
-\subsubsection*{Algorithms/Scheduler}
+The \textit{VFS} describes the system's files in terms of superblocks and inodes in much the same way as the EXT2 file system uses superblocks and inodes. Like the EXT2 inodes, the \textit{VFS} inodes describe files and directories within the system; the contents and topology of the Virtual File System. A \textit{VFS} specifies an interface between the kernel and a concrete file system. Therefore, it is easy to add support for new file system types to the kernel simply by fulfilling the contract. 
 
-\tab There are several types of I/O schedulers built into the Linux kernel we worked with already and these schedulers are optimized for different purposes. The NOOP elevator is simple. It does not perform any data ordering. NOOP merges requests into queue. The Deadline I/O Scheduler is designed to prevent starvation of certain requests (such as write operations starving reads) \cite{Love}(pg. 300). The Shortest Seek Time First sheduler is pretty self explainning. Lower sector numbers mean that the cylinder is closer to the spindle, while higher numbers indicate the cylinder is further away. The sstf algorithm check which request is closest to the current request position of the head, and then maniplate that request next\cite{DSA}.
+\subsection*{Windows} 
+Windows on the other hand only supports a handful of file systems. Since Microsoft does not take advantage of a standardize virtual file system like Linux the operating system must know each file system and how to specifically talk to the media. Windows achieves this with an advanced \textit{I/O Manager} that in turn uses drivers just like the Linux kernel to perform the actually operations on to the file system~\cite{Wini}. 
 
-\tab In the version of the Linux kernel we were working with, the default scheduler was the Completely Fair Scheduler (CFS). The Completely Fair Scheduler (CFS) is a process scheduler. It was introduced into the 2.6.23 release of the Linux kernel. It handles CPU resource allocation for all running processes. It goal at maximizing overall CPU utilization and maximizing user interactive response performance. The idea behind CFS is to model scheduling as if the system had an ideal processor that could multitask perfectly. In this kind of system, each runnable process n would receive 1/n of the CPU time. CFS run processes round-robin style for very small tasks (in quantities called slices of time), so that in a given period of time it will appear as though many processes are running in parallel \cite{Love}(pg. 48-50).
+Windows either at boot or when a new volume is mounted first tries to identify what type of filesytem the volume contains. Every Widows supported file system contains the information need for the \textit{FSD} (File system Driver) in the volumes boot sector. If the file system format is unrecognized or boot sector has been corrupt rendering the information Windows uses to identify the volumes file system unreadable Windows will default to the \textit{RAW} \textit{FSD}. When Windows declares a file system as \textit{RAW} the user is prompted to see if they would like to format the volume. If the boot sector is intact and Windows identifies the file system as a supported type Windows creates a \textit{Device Object} that the operating system will use to map the requested I/O operations to the physical media. After a \textit{FSD} claims a volume all of the I/O operations to that volume is passed trough the \textit{FSD}. All of the I/O operations are mapped from the \textit{Device Object} by the \textit{VPB} (Volume Parameter Block) to the volumes responsible \textit{FSD}. When Windows mounts a volume and assigns a drive letter to it, it is really just a symbolic link to the \textit{Device Object}~\cite{Wini}.
 
-\tab CFS is not the only type of scheduling available in the Linux kernel. The Linux scheduler provides soft real-time behavior, it tries to schedule processes within timing deadlines. Linux provides two real-time scheduling policies, FIFO and round-robin \cite{Love}(pg. 64). sentially queues containing process descriptors for runnable processes. Round-robin scheduling cycles through processes, running each for a pre-specified amount of time known as a timeslice. On a more technical level, this means placing the process descriptor at the end of the runqueue after its timeslice, then running all subsequent tasks until it reaches the end of the queue, at which time it will start the cycle again. FIFO (First In, First Out) scheduling runs each FIFO process of the same priority until it is finished, then runs the next process in the runqueue. It does this in order of when processes were placed in the runqueue. On a technical level, FIFO scheduling behaves almost identically to round-robin scheduling but with infinite timeslices.
-
-\subsubsection*{Cryptography}
-
-\section*{Character I/O}
-\tab Overview: A key requirement of any realtime operating system is high-performance character I/O. Character devices can be described as devices to which I/O consists of a sequence of bytes transferred serially, as opposed to block-oriented devices (e.g. disk drives). Character devices are accessed one byte at a time.
-
-\subsection*{Linux}
-\tab As in the POSIX and UNIX tradition, these character devices are located in the OS pathname space under the /dev directory. For example, a serial port to which a modem or terminal could be connected might appear in the system as:\par
-
-/dev/ser1\par
-
-Typical character devices found on PC hardware include:\par
-
-serial ports
-
-parallel ports
-
-text-mode consoles
-
-pseudo terminals (ptys)
-\subsection*{Windows}
-The Windows operating system has it's own system for I/O and utilizes it's own I/O manager.
-        The I/O manager is the core of the I/O system on Windows because it defines the orderly framework within which I/O requests are delivered to device drivers. \cite{Wini}
-        The I/O system on Windows is packet driven and is represented by an I/O request packet called an IRP.
-        These IRPs are designed to travel between one I/O system to another, allowing an individual application thread to manage multiple I/O request concurrently.
-        An IRP is created in memory by the I/O manager representing an I/O operation.
-        A pointer to the IRP is then passed to the correct driver until the completion of the I/O operation.
-        Once the I/O operation has completed or needs to be passed on to another driver, the IRP is sent back to the I/O manager to either dispose of, or pass on to another driver.
-        In addition to handling IRPs, the I/O manager provides flexible I/O services that allow environment subsystems, such as Windows and Posix to implement their respective I/O functions.
-        The I/O manager has no knowledge of anything except for files, and passes the responsibility to translate file-oriented comments such as open, close and read to the driver.
-        A typical I/O request starts with an application executing an I/O related function that is processed by the I/O manager, one or more device drivers, and the hardware abstraction layer (HAL).
-        On Windows, threads perform I/O on virtual files which refer to any source or destination for I/O that is treated as if it were a file.
-        This can be anything from files, directories pipes and mailslots.
 \subsection*{FreeBSD}
-FreeBSD is a Unix-like operating system that descended from Research Unix via the Berkeley Software Distribution.
-        Since FreeBSD is an operating system that is Unix-like, it contains a lot of features that are derived from UNIX.
-        The basic model of the Unix I/O system is a sequence of bytes that can be accessed either randomly or sequentially, and there are no access methods and no control blocks in a typical Unix user process.
-        FreeBSD categorizes hardware devices by being either structured or unstructured.
-        Structured devices, also known as block devices, are typically disks, magnetic tapes and include most random access devices.
-        On block oriented devices, the FreeBSD kernel supports read-modify-write-type buffering actions to allow reading and writting in a totally random byte-addressed fashion.
-        On FreeBSD filesystems are created on block devices.
-        Unstructured devices, also known as character devices, are devices which do not support a block structure.
-        These can include communication lines, raster plotters and unbuffered magnetic tapes and disks.
-        Character devices do typically support large block I/O transfers.
-        The BSD kernel introduced an IPC mechanism which is more flexible than pipes and is based on sockets called the Socket IPC.
-        A socket is an endpoint of communication referred to by a descriptor.
-Two processes can each create a socket, and then connect those two endpoints to produce a reliable byte stream.
-        This new Socket IPC mechanism does essentially what was available previously with the use of pipes without the need for a common parent process to setup the communication channel.
-        The transparency of sockets allows the kernel to redirect the output of one process to the input of another regardless if they have a common parent process.
-        The socket IPC mechanism can also create a connection between sockets on two unrelated process and it can even connect them on different machines.
-        This mechanism widely opens up the functionality of communication between processes however does require extensions to the traditional Unix I/O system calls.
-        Previously, the read and write system calls were used for byte-stream type connections, but six new calls were added to allow sending and receiving addressed messages.
-        The system calls for writing include send, sendto and sendmsg, and the system calls for reading messages include recv, recvfrom, and recvmesg.
-        The FreeBSD kernel used to rely on the traditional read and write system calls, however 4.2BSD introduced the ability to do scatter/gather I/O. \cite{freebsd.org}
-        Scatter/gather I/O is where a single procedure call sequentially reads data from multiple buffers and writes it to a single data stream, or reads data from a data stream and writes it to multiple buffers.
-        Scatter input uses the readv system call to allow a single read to be placed in several different buffers while the writev system call allows several buffers to be written in a single atomic write.
-        Instead of the traditional read and write which passes a single buffer and length parameter, the scatter/gather process passes in a pointer to an array of buffers and lengths, along with a count describing the size of the array.
+Traditionally, the native FreeBSD file system has been the Unix File System UFS which has been modernized as UFS2. Since FreeBSD 7.0, the \textit{Z File System (ZFS)} is also available as a native file system. FreeBSD also supports a multitude of other file systems so that data from other operating systems can be accessed locally, such as data stored on locally attached USB storage devices, flash drives, and hard disks. This includes support for the \textit{Linux® Extended File System (EXT)} and the Reiser file system.
+
+\textit{ZFS} is significantly different from any previous file system because it is more than just a file system. Combining the traditionally separate roles of volume manager and file system provides \textit{ZFS} with unique advantages. Such as volume management, snapshots, checksumming, compression and deduplication, replication and more. The file system is now aware of the underlying structure of the disks. Traditional file systems could only be created on a single disk at a time. If there were two disks then two separate file systems would have to be created. In a traditional hardware RAID configuration, this problem was avoided by presenting the operating system with a single logical disk made up of the space provided by a number of physical disks, on top of which the operating system placed a file system. Even in the case of software RAID solutions like those provided by GEOM, the UFS file system living on top of the RAID transform believed that it was dealing with a single device. \textit{ZFS}'s combination of the volume manager and the file system solves this and allows the creation of many file systems all sharing a pool of available storage. One of the biggest advantages to \textit{ZFS}'s awareness of the physical layout of the disks is that existing file systems can be grown automatically when additional disks are added to the pool. This new space is then made available to all of the file systems. \textit{ZFS} also has a number of different properties that can be applied to each file system, giving many advantages to creating a number of different file systems and data sets rather than a single monolithic file system. \cite{BSDhandbook}
+
+\section*{Comparison}
+\noindent \textbf{Similarities}\\
+\begin{itemize}
+    \item Read information from the MBR(master Boot Record).
+    \item Each file system gets a file descriptor mapped to unique location.
+    \item Need a file system driver to write to actual volume.
+\end{itemize}
+\noindent \textbf{Differences}\\
+\begin{itemize}
+    \item Windows kernel needs to be aware of what the underlying file system is.
+    \item Volumes in Windows get assigned letters, Volumes are assigned devices with numbers in Linux.
+    \item FreeBSD ZFS utilizing virtual devices to manage one ore more disks like a RAID hardware controller do.
+    \item FreeBSD ZFS using 256-bit checksum to ensure data integrity and reliability. 
+\end{itemize}
+
 \newpage
 \bibliographystyle{IEEEtran}
 \bibliography{ref}

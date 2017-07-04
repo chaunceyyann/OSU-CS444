@@ -27,4 +27,5 @@ fi
 # Network pass through: Default - without any -net option - is Pass-through.
 # Virtio: 
 #qemu-system-i386 -gdb tcp::5515 -S -nographic -kernel $kernel_path -drive file=core-image-lsb-sdk-qemux86.ext3,if=ide -enable-kvm -usb -localtime --no-reboot --append "root=/dev/hda rw console=ttyS0 debug"
-qemu-system-i386 -gdb tcp::5515 -S -nographic -kernel $kernel_path -drive file=core-image-lsb-sdk-qemux86.ext3,if=virtio -enable-kvm -net none -usb -localtime --no-reboot --append "root=/dev/vda rw console=ttyS0 debug"
+qemu-system-i386 -gdb tcp::5515 -S -nographic -kernel $kernel_path -drive file=core-image-lsb-sdk-qemux86.ext3,if=virtio -enable-kvm -net nic, -net user -usb -localtime --no-reboot --append "root=/dev/vda rw console=ttyS0 debug"
+
